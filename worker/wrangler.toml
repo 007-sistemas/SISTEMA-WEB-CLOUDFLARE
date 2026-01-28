@@ -1,0 +1,12 @@
+name = "cloudflare-worker-api"
+type = "javascript"
+main = "src/index.ts"
+compatibility_date = "2026-01-28"
+node_compat = true
+
+[build]
+command = "npm install && npm run build"
+
+[vars]
+# Adicione suas variáveis de ambiente aqui
+# DATABASE_URL = "..."

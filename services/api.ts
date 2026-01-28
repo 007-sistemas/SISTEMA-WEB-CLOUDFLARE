@@ -15,10 +15,17 @@ const API_BASE = (() => {
   return '';
 })();
 
+
+// Novo: monta a URL absoluta para o Worker se VITE_API_BASE estiver definido
 const buildUrl = (path: string) => {
   const trimmedBase = API_BASE.replace(/\/$/, '');
   const trimmedPath = path.replace(/^\//, '');
-  return `${trimmedBase}/api/${trimmedPath}`;
+  // Se VITE_API_BASE estiver setado, monta URL absoluta (ex: https://worker.../api/rota)
+  if (trimmedBase) {
+    return `${trimmedBase}/${trimmedPath}`;
+  }
+  // Fallback: mantém /api/rota para dev local
+  return `/api/${trimmedPath}`;
 };
 
 export async function apiGet<T>(path: string): Promise<T> {
