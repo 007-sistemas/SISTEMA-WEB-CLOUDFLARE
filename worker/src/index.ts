@@ -2,15 +2,21 @@ import { neon } from '@neondatabase/serverless';
 
 export default {
   async fetch(request: Request): Promise<Response> {
-    // Exemplo simples: GET /api/ping
     const url = new URL(request.url);
     if (url.pathname === '/api/ping') {
       return new Response('pong', { status: 200 });
     }
 
-    // Exemplo: conexão com NeonDB
+    // Compatível com Node.js e Deno
+    const getEnv = (key: string) =>
+      typeof process !== 'undefined' && process.env
+        ? process.env[key]
+        : (globalThis as any).Deno?.env?.get(key);
+
     if (url.pathname === '/api/test-db') {
-      const sql = neon(Deno.env.get('DATABASE_URL')!);
+      const dbUrl = getEnv('DATABASE_URL');
+      if (!dbUrl) return new Response('DATABASE_URL não definida', { status: 500 });
+      const sql = neon(dbUrl);
       const result = await sql`SELECT NOW()`;
       return Response.json(result);
     }
