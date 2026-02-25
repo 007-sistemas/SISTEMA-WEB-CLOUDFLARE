@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cooperado, StatusCooperado } from '../types';
 import { StorageService } from '../services/storage';
-import { Plus, Save, Search, Edit2, Trash2, X, Fingerprint, Briefcase, AlertCircle, Upload, Download, CheckCircle, AlertTriangle, FileSpreadsheet } from 'lucide-react';
+import { Plus, Save, Search, Edit2, Trash2, X, Fingerprint, Briefcase, AlertCircle, Upload, Download, CheckCircle, AlertTriangle, ArrowDown } from 'lucide-react';
   // Exportar todos os cooperados para XLSX
   const exportarCooperados = () => {
     if (!cooperados.length) {
@@ -325,14 +325,6 @@ export const CooperadoRegister: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={exportarCooperados}
-            className="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-            title="Exportar todos os cooperados"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>Exportar Planilha</span>
-          </button>
-          <button 
             onClick={downloadTemplate}
             className="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
             title="Baixar modelo em Excel"
@@ -340,14 +332,22 @@ export const CooperadoRegister: React.FC = () => {
             <Download className="h-4 w-4" />
             <span>Modelo Planilha</span>
           </button>
-          <button 
+          <button
             onClick={() => setShowCSVImport(true)}
             className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
             <Upload className="h-4 w-4" />
             <span>Importar Planilha</span>
           </button>
-          <button 
+          <button
+            onClick={exportarCooperados}
+            className="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            title="Exportar todos os cooperados"
+          >
+            <ArrowDown className="h-4 w-4" />
+            <span>Exportar Planilha</span>
+          </button>
+          <button
             onClick={() => { setFormData(initialFormState); setIsFormOpen(true); }}
             className="flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
