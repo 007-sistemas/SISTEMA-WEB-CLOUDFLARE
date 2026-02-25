@@ -36,6 +36,7 @@ export interface Cooperado {
 export interface Setor {
   id: number;
   nome: string;
+  status?: 'ATIVO' | 'INATIVO';
 }
 
 // Turno Padrão (Template Global)
