@@ -291,18 +291,14 @@ export const CooperadoRegister: React.FC = () => {
   const downloadTemplate = () => {
     // Criar template Excel vazio com 10 linhas para preenchimento
     // Status sempre será ATIVO por padrão
-    const templateData = [
-      { nome: '', cpf: '', matricula: '', categoriaProfissional: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-      { nome: '', cpf: '', matricula: '', especialidade: '', telefone: '', email: '' },
-    ];
+    const templateData = Array.from({ length: 10 }).map(() => ({
+      nome: '',
+      cpf: '',
+      matricula: '',
+      categoriaProfissional: '',
+      telefone: '',
+      email: ''
+    }));
 
     const ws = XLSX.utils.json_to_sheet(templateData);
     

@@ -43,7 +43,8 @@ export const parseCSV = (csvText: string): CsvRow[] => {
 
   for (let i = 1; i < linhas.length; i++) {
     const valores = linhas[i].split(',').map(v => v.trim());
-    if (valores.every(v => !v)) continue; // Pula linhas vazias
+    // Ignora linhas totalmente em branco
+    if (valores.every(v => !v)) continue;
 
     const row: CsvRow = {
       nome: '',
@@ -73,6 +74,8 @@ export const parseCSV = (csvText: string): CsvRow[] => {
  * Validar e preparar cooperados para importação
  */
 export const validateAndPrepareImport = (csvRows: CsvRow[]): ImportResult => {
+    // Buscar categorias válidas do banco
+    const categoriasValidas = StorageService.getCategorias ? StorageService.getCategorias() : [];
   const sucesso: Cooperado[] = [];
   const erros: ImportError[] = [];
   const nomesCpfUsados = new Set<string>();
@@ -88,6 +91,13 @@ export const validateAndPrepareImport = (csvRows: CsvRow[]): ImportResult => {
     }
     if (!row.cpf || !row.cpf.trim()) {
       errosRow.push('CPF é obrigatório');
+    }
+
+    // Validar categoria profissional
+    if (row.categoriaProfissional && categoriasValidas.length > 0) {
+      if (!categoriasValidas.includes(row.categoriaProfissional)) {
+        errosRow.push('Categoria profissional não existe no banco');
+      }
     }
 
     // Validar formato CPF (remover caracteres especiais)
