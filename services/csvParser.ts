@@ -73,9 +73,12 @@ export const parseCSV = (csvText: string): CsvRow[] => {
 /**
  * Validar e preparar cooperados para importação
  */
-export const validateAndPrepareImport = (csvRows: CsvRow[]): ImportResult => {
-    // Buscar categorias válidas do banco
-    const categoriasValidas = StorageService.getCategorias ? StorageService.getCategorias() : [];
+// Agora recebe categorias válidas como argumento
+export const validateAndPrepareImport = (csvRows: CsvRow[], categoriasValidas?: string[]): ImportResult => {
+  // Se não passar, busca do banco (fallback)
+  if (!categoriasValidas) {
+    categoriasValidas = StorageService.getCategorias ? StorageService.getCategorias() : [];
+  }
   const sucesso: Cooperado[] = [];
   const erros: ImportError[] = [];
   const nomesCpfUsados = new Set<string>();

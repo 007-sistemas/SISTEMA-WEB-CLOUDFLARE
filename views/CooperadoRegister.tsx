@@ -240,7 +240,6 @@ export const CooperadoRegister: React.FC = () => {
 
     try {
       let rows;
-      
       // Detectar tipo de arquivo
       if (file.name.endsWith('.csv')) {
         const text = await file.text();
@@ -252,7 +251,8 @@ export const CooperadoRegister: React.FC = () => {
         return;
       }
 
-      const result = validateAndPrepareImport(rows);
+      // Passa as categorias válidas para a validação
+      const result = validateAndPrepareImport(rows, categorias);
       setCsvPreview(result);
       setImportResult(null);
     } catch (error) {
