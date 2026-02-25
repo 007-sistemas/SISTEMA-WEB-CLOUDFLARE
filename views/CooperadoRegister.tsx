@@ -28,7 +28,7 @@ import { Plus, Save, Search, Edit2, Trash2, X, Fingerprint, Briefcase, AlertCirc
   };
 import { parseCSV, validateAndPrepareImport, importCooperados, parseExcelFile } from '../services/csvParser';
 import { normalizeNome } from '../services/normalize';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx/dist/xlsx.full.min.js';
 
 export const CooperadoRegister: React.FC = () => {
   const [cooperados, setCooperados] = useState<Cooperado[]>([]);
