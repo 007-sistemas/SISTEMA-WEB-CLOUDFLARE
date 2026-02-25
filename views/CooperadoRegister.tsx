@@ -17,8 +17,8 @@ export const CooperadoRegister: React.FC = () => {
       }
       // Definir colunas visíveis
       const columns = [
-        { header: 'Nome', key: 'nome' },
         { header: 'Matrícula', key: 'matricula' },
+        { header: 'Nome', key: 'nome' },
         { header: 'Categoria', key: 'categoriaProfissional' },
         { header: 'Status', key: 'status' },
         { header: 'Produção CPF', key: 'producaoPorCpf' },
@@ -27,7 +27,12 @@ export const CooperadoRegister: React.FC = () => {
         { header: 'E-mail', key: 'email' },
       ];
       try {
-        const data = cooperados.map(c => {
+        // Ordenar cooperados pelo número da matrícula (crescente)
+        const data = [...cooperados].sort((a, b) => {
+          const aMat = Number(a.matricula) || 0;
+          const bMat = Number(b.matricula) || 0;
+          return aMat - bMat;
+        }).map(c => {
           const obj: any = {};
           columns.forEach(col => {
             obj[col.header] = c[col.key] ?? '';
