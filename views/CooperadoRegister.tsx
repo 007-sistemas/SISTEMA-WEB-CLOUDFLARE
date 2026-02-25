@@ -289,20 +289,8 @@ export const CooperadoRegister: React.FC = () => {
   };
 
   const downloadTemplate = () => {
-    // Criar template Excel vazio com 10 linhas para preenchimento
-    // Status sempre será ATIVO por padrão
-    const templateData = Array.from({ length: 10 }).map(() => ({
-      nome: '',
-      cpf: '',
-      matricula: '',
-      categoriaProfissional: '',
-      telefone: '',
-      email: ''
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    
-    // Ajustar largura das colunas
+    // Gerar apenas o cabeçalho, sem linhas de dados
+    const ws = XLSX.utils.json_to_sheet([]);
     ws['!cols'] = [
       { wch: 25 }, // nome
       { wch: 15 }, // cpf
@@ -311,7 +299,8 @@ export const CooperadoRegister: React.FC = () => {
       { wch: 15 }, // telefone
       { wch: 25 }  // email
     ];
-
+    // Adiciona cabeçalho manualmente
+    XLSX.utils.sheet_add_aoa(ws, [['nome', 'cpf', 'matricula', 'categoriaProfissional', 'telefone', 'email']], { origin: 'A1' });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Cooperados');
     XLSX.writeFile(wb, 'cooperados_modelo.xlsx');
