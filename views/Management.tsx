@@ -144,11 +144,16 @@ export const Management: React.FC = () => {
   const handleEdit = (m: Manager) => {
     // Recarrega do localStorage para garantir que tem os dados mais recentes
     const fresh = StorageService.getManagers().find(manager => manager.id === m.id);
-    if (fresh) {
-      setFormData(fresh);
-    } else {
-      setFormData(m);
+    let managerToEdit = fresh || m;
+    // Log para debug
+    console.log('[handleEdit] Dados do gestor:', managerToEdit);
+    // Validação básica
+    if (!managerToEdit || typeof managerToEdit !== 'object' || !managerToEdit.username || !managerToEdit.cpf) {
+      console.error('[handleEdit] Dados inválidos ou corrompidos:', managerToEdit);
+      alert('Erro ao carregar dados do gestor. Dados inválidos ou corrompidos.');
+      return;
     }
+    setFormData(managerToEdit);
     setIsFormOpen(true);
   };
 
