@@ -554,7 +554,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Upsert: inserir se não existe, atualizar se existe
       const result = await sql`
-        INSERT INTO managers (id, username, password, cpf, email, permissoes, preferences)
+        INSERT INTO managers (id, username, password, cpf, email, permissoes, preferences, categoria, unidadesTomador)
         VALUES (
           ${manager.id},
           ${manager.username},
@@ -562,7 +562,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ${manager.cpf || null},
           ${manager.email || null},
           ${JSON.stringify(manager.permissoes || {})},
-          ${manager.preferences ? JSON.stringify(manager.preferences) : null}
+          ${manager.preferences ? JSON.stringify(manager.preferences) : null},
+          ${manager.categoria || null},
+          ${manager.unidadesTomador ? JSON.stringify(manager.unidadesTomador) : null}
         )
         ON CONFLICT (id) DO UPDATE SET
           username = ${manager.username},
@@ -570,7 +572,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           cpf = ${manager.cpf || null},
           email = ${manager.email || null},
           permissoes = ${JSON.stringify(manager.permissoes || {})},
-          preferences = ${manager.preferences ? JSON.stringify(manager.preferences) : null}
+          preferences = ${manager.preferences ? JSON.stringify(manager.preferences) : null},
+          categoria = ${manager.categoria || null},
+          unidadesTomador = ${manager.unidadesTomador ? JSON.stringify(manager.unidadesTomador) : null}
         RETURNING id;
       `;
       console.log('[sync] Manager salvo com sucesso:', result);
