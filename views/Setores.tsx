@@ -29,7 +29,7 @@ export const SetoresView: React.FC = () => {
   const [useLocal, setUseLocal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingNome, setEditingNome] = useState('');
-  const [statusSetores, setStatusSetores] = useState<Record<string, 'ATIVO' | 'INATIVO'>>({});
+  // Removido statusSetores
   const [vinculos, setVinculos] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -51,13 +51,10 @@ export const SetoresView: React.FC = () => {
       // Buscar status e vínculos reais
       const pontos = await apiGet<any[]>('pontos');
       const setoresVinculados = new Set(pontos.map(p => String(p.setorId)).filter(Boolean));
-      const statusReal: Record<string, 'ATIVO' | 'INATIVO'> = {};
       const vinculosReal: Record<string, boolean> = {};
       normalized.forEach(s => {
-        statusReal[s.id] = (s.status === 'INATIVO') ? 'INATIVO' : 'ATIVO';
         vinculosReal[s.id] = setoresVinculados.has(s.id);
       });
-      setStatusSetores(statusReal);
       setVinculos(vinculosReal);
     } catch (err) {
       console.warn('API indisponível, usando localStorage:', err);
@@ -88,7 +85,7 @@ export const SetoresView: React.FC = () => {
         const novoSetor = await apiPost<any>('setores', { nome: novoNome.trim() });
         setSetores([...setores, { ...novoSetor, id: String(novoSetor.id) }]);
         // Atualiza statusSetores para refletir o status retornado pela API
-        setStatusSetores(prev => ({ ...prev, [String(novoSetor.id)]: novoSetor.status === 'INATIVO' ? 'INATIVO' : 'ATIVO' }));
+        // status removido
       }
       setNovoNome('');
     } catch (err) {
@@ -179,22 +176,22 @@ export const SetoresView: React.FC = () => {
           ⚠️ API indisponível. Usando armazenamento local (dados não persistem no Turso).
         </div>
       )}
-        <div className="flex gap-2 mb-6">
-          <input
-            className="border rounded px-3 py-2 flex-1"
-            placeholder="Pesquisar ou adicionar setor"
-            value={novoNome}
-            onChange={e => setNovoNome(e.target.value)}
-            disabled={loading}
-          />
-          <button
-            className="bg-green-600 text-white px-4 py-2 rounded font-semibold disabled:opacity-50"
-            onClick={handleAddSetor}
-            disabled={loading || !novoNome.trim() || setores.some(s => s.nome.toLowerCase() === novoNome.trim().toLowerCase())}
-          >
-            {loading ? 'Salvando...' : 'Novo Setor'}
-          </button>
-        </div>
+      <div className="flex gap-2 mb-6">
+        <input
+          className="border rounded px-3 py-2 flex-1"
+          placeholder="Pesquisar ou adicionar setor"
+          value={novoNome}
+          onChange={e => setNovoNome(e.target.value)}
+          disabled={loading}
+        />
+        <button
+          className="bg-green-600 text-white px-4 py-2 rounded font-semibold disabled:opacity-50"
+          onClick={handleAddSetor}
+          disabled={loading || !novoNome.trim() || setores.some(s => s.nome.toLowerCase() === novoNome.trim().toLowerCase())}
+        >
+          {loading ? 'Salvando...' : 'Novo Setor'}
+        </button>
+      </div>
       {loading && setores.length === 0 ? (
         <p className="text-gray-500 text-center">Carregando setores...</p>
       ) : (
@@ -235,7 +232,7 @@ export const SetoresView: React.FC = () => {
                 ) : (
                   <>
                     <span className="font-medium text-gray-800 mb-2 w-full break-words text-center" style={{ wordBreak: 'break-word', whiteSpace: 'pre-line' }}>{setor.nome}</span>
-                    <div className="flex gap-2 mt-auto justify-center">
+                    <div className="flex gap-2 mt-auto justify-center items-center">
                       {!vinculos[setor.id] && (
                         <>
                           <button
@@ -256,24 +253,6 @@ export const SetoresView: React.FC = () => {
                           </button>
                         </>
                       )}
-                      <button
-                        onClick={async () => {
-                          const novoStatus = statusSetores[setor.id] === 'ATIVO' ? 'INATIVO' : 'ATIVO';
-                          setLoading(true);
-                          try {
-                            await apiPut('setores', { id: setor.id, status: novoStatus });
-                            setStatusSetores(prev => ({ ...prev, [setor.id]: novoStatus }));
-                          } catch (err) {
-                            alert('Erro ao atualizar status do setor');
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        className={statusSetores[setor.id] === 'ATIVO' ? "bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold border border-green-200" : "bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold border border-red-200"}
-                        disabled={loading}
-                      >
-                        {statusSetores[setor.id] === 'ATIVO' ? 'Ativo' : 'Desativado'}
-                      </button>
                     </div>
                   </>
                 )}
