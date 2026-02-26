@@ -329,7 +329,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {isMobileMenuOpen && (
           <div className="md:hidden bg-primary-900 text-white p-4 space-y-2 absolute w-full z-50">
             {navItems.map((item) => 
-              item.id !== 'cadastros' ? (
+              item.id !== 'cadastros' && item.id !== 'perfil' ? (
                 <button
                   key={item.id}
                   onClick={() => {
@@ -379,6 +379,34 @@ export const Layout: React.FC<LayoutProps> = ({
                 </div>
               )
             )}
+          {/* Botão Meu Perfil mobile */}
+          {showPerfil && (
+            <button
+            key={perfilNavItem.id}
+            onClick={() => {
+              onChangeView(perfilNavItem.id);
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex flex-col items-center justify-center px-4 py-3 rounded-lg transition-colors mt-4 ${
+              currentView === perfilNavItem.id 
+              ? 'bg-primary-700 text-white shadow-lg' 
+              : 'text-primary-100 hover:bg-primary-800 hover:text-white'
+            }`}
+            >
+            <perfilNavItem.icon className="h-6 w-6 mb-1" />
+            <span className="font-semibold text-base">Meu Perfil</span>
+            <span className="block text-xs mt-1 text-center w-full">
+              {(() => {
+              const session = StorageService.getSession();
+              if (session?.user?.nome) {
+                const partes = session.user.nome.split(' ');
+                return partes.length > 1 ? `${partes[0]} ${partes[1]}` : partes[0];
+              }
+              return perfilNavItem.label;
+              })()}
+            </span>
+            </button>
+          )}
             <div className="border-t border-primary-800 pt-2 mt-2">
                 <button 
                     onClick={handleLogoutClick}
