@@ -34,54 +34,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
-      const { id, nome, slug, usuarioAcesso, senha, permissoes } = req.body;
-      
-      if (!id || !nome || !usuarioAcesso || !senha) {
-        res.status(400).json({ error: 'Campos obrigatórios: id, nome, usuarioAcesso, senha' });
+      const { id, nome, slug } = req.body;
+      if (!id || !nome) {
+        res.status(400).json({ error: 'Campos obrigatórios: id, nome' });
         return;
       }
-
       await sql`
-        INSERT INTO hospitals (id, nome, slug, usuario_acesso, senha, permissoes, created_at)
+        INSERT INTO hospitals (id, nome, slug, created_at)
         VALUES (
           ${id}, 
           ${nome}, 
           ${slug || nome.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10)},
-          ${usuarioAcesso},
-          ${senha},
-          ${JSON.stringify(permissoes || {})},
           CURRENT_TIMESTAMP
         )
         ON CONFLICT (id) DO UPDATE SET
           nome = EXCLUDED.nome,
-          slug = EXCLUDED.slug,
-          usuario_acesso = EXCLUDED.usuario_acesso,
-          senha = EXCLUDED.senha,
-          permissoes = EXCLUDED.permissoes
+          slug = EXCLUDED.slug
       `;
-
       res.status(201).json({ ok: true, id });
       return;
     }
 
     if (req.method === 'PUT') {
-      const { id, nome, slug, usuarioAcesso, senha, permissoes } = req.body;
-      
+      const { id, nome, slug } = req.body;
       if (!id) {
         res.status(400).json({ error: 'Campo obrigatório: id' });
         return;
       }
-
       await sql`
         UPDATE hospitals SET
           nome = ${nome},
-          slug = ${slug},
-          usuario_acesso = ${usuarioAcesso},
-          senha = ${senha},
-          permissoes = ${JSON.stringify(permissoes || {})}
+          slug = ${slug}
         WHERE id = ${id}
       `;
-
       res.status(200).json({ ok: true });
       return;
     }
