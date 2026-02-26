@@ -33,21 +33,6 @@ export const HospitalRegister: React.FC = () => {
     id: '',
     nome: '',
     slug: '',
-    usuarioAcesso: '',
-    senha: '',
-    permissoes: {
-      dashboard: true,
-      ponto: true,
-      relatorio: true,
-      relatorios: true,
-      cadastro: false,
-      hospitais: false,
-      biometria: true,
-      auditoria: false,
-      gestao: false,
-      espelho: false,
-      autorizacao: false
-    }
   };
   
   const [formData, setFormData] = useState<Hospital>(initialFormState);
@@ -152,38 +137,20 @@ export const HospitalRegister: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome) return alert('Nome do hospital é obrigatório');
-    if (!formData.usuarioAcesso) return alert('Usuário de acesso é obrigatório');
-    if (!formData.senha) return alert('Senha de acesso é obrigatória');
-    
-    // Check if username exists (if new or changing username)
-    const existing = hospitais.find(h => h.usuarioAcesso === formData.usuarioAcesso && h.id !== formData.id);
-    if (existing) {
-        return alert('Este usuário de acesso já está em uso.');
-    }
-
     const slug = formData.slug || formData.nome.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10);
-
     const newHospital: Hospital = {
       ...formData,
       slug: slug,
       id: formData.id || crypto.randomUUID(),
     };
-
     console.log('💾 Salvando hospital:', newHospital);
-
-    // Salvar no localStorage
     StorageService.saveHospital(newHospital);
-    
-    // Tentar salvar no Neon via API
     try {
       console.log('🌐 Enviando para API /hospitals...');
       const response = await apiPost('hospitals', {
         id: newHospital.id,
         nome: newHospital.nome,
         slug: newHospital.slug,
-        usuarioAcesso: newHospital.usuarioAcesso,
-        senha: newHospital.senha,
-        permissoes: newHospital.permissoes
       });
       console.log('✅ Hospital salvo na API:', response);
     } catch (err) {
@@ -263,28 +230,7 @@ export const HospitalRegister: React.FC = () => {
   };
 
   // Permission Labels Map
-  const permissionLabels: { key: keyof HospitalPermissions; label: string }[] = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'ponto', label: 'Registrar Produção' },
-    { key: 'relatorio', label: 'Controle de Produção' },
-    { key: 'relatorios', label: 'Relatórios' },
-    { key: 'autorizacao', label: 'Justificativa de Plantão' },
-    { key: 'cadastro', label: 'Cooperados' },
-    { key: 'hospitais', label: 'Unidades & Setores' },
-    { key: 'biometria', label: 'Biometria' },
-    { key: 'auditoria', label: 'Auditoria & Logs' },
-    { key: 'gestao', label: 'Gestão de Usuários' },
-  ];
-
-  const togglePermission = (key: keyof HospitalPermissions) => {
-    setFormData(prev => ({
-      ...prev,
-      permissoes: {
-        ...prev.permissoes,
-        [key]: !prev.permissoes[key]
-      }
-    }));
-  };
+  // Permissões removidas
 
   return (
     <div className="space-y-6">
@@ -335,31 +281,16 @@ export const HospitalRegister: React.FC = () => {
           {abaAtiva === 'dados' && (
             <form onSubmit={handleSave} className="space-y-6">
               {/* Identification Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">Nome da Unidade</label>
-                  <input
-                    required
-                    type="text"
-                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
-                    value={formData.nome}
-                    onChange={e => setFormData({...formData, nome: e.target.value})}
-                    placeholder="Ex: Hospital Regional Norte"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                    <User className="h-3 w-3" /> Usuário de Acesso
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
-                    value={formData.usuarioAcesso}
-                    onChange={e => setFormData({...formData, usuarioAcesso: e.target.value})}
-                    placeholder="Crie um usuário para login"
-                  />
-                </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Nome da Unidade</label>
+                <input
+                  required
+                  type="text"
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
+                  value={formData.nome}
+                  onChange={e => setFormData({...formData, nome: e.target.value})}
+                  placeholder="Ex: Hospital Regional Norte"
+                />
               </div>
               {/* Setores Section */}
               <div className="space-y-3 p-4 bg-white rounded-lg border border-gray-200">
@@ -447,41 +378,9 @@ export const HospitalRegister: React.FC = () => {
                 </div>
               </Modal>
               {/* Permissions Section */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2 mb-3 text-gray-700 font-semibold border-b border-gray-200 pb-2">
-                  <Shield className="h-4 w-4" /> Permissões de Acesso
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
-                  {permissionLabels.map((perm) => (
-                    <div key={perm.key} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">{perm.label}</span>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={formData.permissoes[perm.key]}
-                          onChange={() => togglePermission(perm.key)}
-                        />
-                        <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Permissões removidas */}
               {/* Password Section */}
-              <div className="pt-4 border-t border-gray-100">
-                <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> Definir Senha de Acesso
-                </label>
-                <input
-                  required
-                  type="text"
-                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
-                  value={formData.senha}
-                  onChange={e => setFormData({...formData,senha: e.target.value})}
-                  placeholder="Digite a senha..."
-                />
-              </div>
+              {/* Senha removida */}
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
