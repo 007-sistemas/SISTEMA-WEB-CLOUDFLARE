@@ -195,17 +195,21 @@ export const parseExcelFile = async (file: File): Promise<CsvRow[]> => {
         // Convert to JSON (headers as keys)
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
         
-        // Convert to CsvRow format
-        const rows: CsvRow[] = jsonData.map((row: any) => ({
-          nome: normalizeNome(String(row.nome || '').trim()),
-          cpf: String(row.cpf || '').trim(),
-          matricula: String(row.matricula || '').trim(),
-          categoriaProfissional: String(row.categoriaProfissional || '').trim(),
-          telefone: String(row.telefone || '').trim(),
-          email: String(row.email || '').trim(),
-          status: String(row.status || '').trim(),
-        }));
-        
+        // Convert to CsvRow format e ignora linhas totalmente vazias
+        const rows: CsvRow[] = jsonData
+          .map((row: any) => ({
+            nome: normalizeNome(String(row.nome || '').trim()),
+            cpf: String(row.cpf || '').trim(),
+            matricula: String(row.matricula || '').trim(),
+            categoriaProfissional: String(row.categoriaProfissional || '').trim(),
+            telefone: String(row.telefone || '').trim(),
+            email: String(row.email || '').trim(),
+            status: String(row.status || '').trim(),
+          }))
+          .filter(row => {
+            // Ignora linhas onde todos os campos estão vazios
+            return Object.values(row).some(v => v && String(v).trim() !== '');
+          });
         resolve(rows);
       } catch (error) {
         reject(error);

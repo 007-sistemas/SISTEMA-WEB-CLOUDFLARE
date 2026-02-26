@@ -1,0 +1,18 @@
+Ícones disponíveis no pacote lucide-react (exemplo):
+- Download
+- Upload
+- Plus
+- Save
+- Search
+- Edit2
+- Trash2
+- X
+- Fingerprint
+- Briefcase
+- AlertCircle
+- CheckCircle
+- AlertTriangle
+- FileSpreadsheet
+- ArrowDown
+
+Se ArrowDown não funcionar, pode-se usar Download para o ícone de baixar.

@@ -101,6 +101,9 @@ export const EspelhoBiometria: React.FC = () => {
   const cooperadoId = session?.type === 'COOPERADO' ? session?.user?.id : null;
   const cooperadoData = session?.type === 'COOPERADO' ? session?.user : null;
 
+  // Exibir nome completo do usuário logado no topo da tela
+  const nomeCompleto = cooperadoData?.nome || session?.user?.nome || '';
+
   const matchesCooperado = (log: any, coopId?: string | null, sess?: any) => {
     const effectiveId = coopId || cooperadoId;
     const effectiveName = sess?.user?.nome || cooperadoData?.nome;
@@ -639,6 +642,12 @@ export const EspelhoBiometria: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Nome completo do usuário logado */}
+      {nomeCompleto && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-bold text-lg text-primary-700">{nomeCompleto}</span>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">

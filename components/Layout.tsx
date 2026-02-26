@@ -276,25 +276,35 @@ export const Layout: React.FC<LayoutProps> = ({
               </div>
             )
           )}
-          {/* Meu Perfil sempre por último */}
+          {/* Removido botão "Meu Perfil" daqui, será exibido no rodapé */}
+        </nav>
+
+
+        <div className="p-4 border-t border-primary-800 flex flex-col gap-2">
           {showPerfil && (
             <button
               key={perfilNavItem.id}
               onClick={() => onChangeView(perfilNavItem.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors mt-6 ${
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 currentView === perfilNavItem.id 
                   ? 'bg-primary-700 text-white shadow-lg' 
                   : 'text-primary-100 hover:bg-primary-800 hover:text-white'
               }`}
             >
               <perfilNavItem.icon className="h-5 w-5" />
-              <span>{perfilNavItem.label}</span>
+              {/* Exibe nome e sobrenome do usuário logado */}
+              <span>
+                {(() => {
+                  const session = StorageService.getSession();
+                  if (session?.user?.nome) {
+                    const partes = session.user.nome.split(' ');
+                    return partes.length > 1 ? `${partes[0]} ${partes[1]}` : partes[0];
+                  }
+                  return perfilNavItem.label;
+                })()}
+              </span>
             </button>
           )}
-        </nav>
-
-
-        <div className="p-4 border-t border-primary-800">
           <button 
             onClick={handleLogoutClick}
             className="flex items-center space-x-2 text-primary-200 hover:text-white transition-colors text-sm w-full"

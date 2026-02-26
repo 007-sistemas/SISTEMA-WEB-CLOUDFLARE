@@ -113,10 +113,10 @@ export const UserProfile: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nome de Usuário</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
             <input
               type="text"
-              value={session.user?.username || ''}
+              value={session.user?.nome || ''}
               disabled
               className="w-full bg-gray-100 text-gray-900 border border-gray-300 rounded-lg px-3 py-2 text-sm"
             />
