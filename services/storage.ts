@@ -115,7 +115,8 @@ export const StorageService = {
   authenticate: (usernameOrCode: string, password: string): { type: 'MANAGER' | 'HOSPITAL' | 'COOPERADO', user: any, permissions: HospitalPermissions } | null => {
     // 1. Check Managers
     const managers: Manager[] = JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]');
-    const manager = managers.find(m => m.username === usernameOrCode && m.password === password);
+    // Permitir login do gestor tanto pelo username quanto pelo CPF
+    const manager = managers.find(m => (m.username === usernameOrCode || m.cpf === usernameOrCode) && m.password === password);
     
     if (manager) {
       // Garantir que permissão 'relatorios' existe
