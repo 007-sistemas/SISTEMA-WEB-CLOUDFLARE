@@ -298,15 +298,24 @@ export const Management: React.FC = () => {
                   type="text"
                   placeholder="000.000.000-00"
                   className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 outline-none"
-                  value={formData.cpf}
+                  value={formatCpf(formData.cpf)}
                   onChange={e => {
-                    const cpf = e.target.value;
+                    // Aceita só números, mas exibe formatado
+                    const raw = e.target.value.replace(/\D/g, '');
                     setFormData(prev => ({
                       ...prev,
-                      cpf,
-                      username: cpf // username sempre igual ao CPF
+                      cpf: raw
                     }));
                   }}
+                // Função utilitária para formatar CPF
+                function formatCpf(cpf: string) {
+                  if (!cpf) return '';
+                  const v = cpf.replace(/\D/g, '').slice(0, 11);
+                  if (v.length <= 3) return v;
+                  if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, '$1.$2');
+                  if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+                  return v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+                }
                 />
               </div>
               <div className="space-y-1">
