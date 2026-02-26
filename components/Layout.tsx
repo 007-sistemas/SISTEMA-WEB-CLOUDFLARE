@@ -307,10 +307,10 @@ export const Layout: React.FC<LayoutProps> = ({
           )}
           <button 
             onClick={handleLogoutClick}
-            className="flex items-center space-x-2 text-primary-200 hover:text-white transition-colors text-sm w-full"
+            className="flex flex-col items-center justify-center gap-1 text-primary-200 hover:text-white transition-colors text-sm w-full mt-2"
           >
-            <LogOut className="h-4 w-4" />
-            <span>Sair do Sistema</span>
+            <LogOut className="h-5 w-5 mb-1" />
+            <span className="font-semibold">Sair do Sistema</span>
           </button>
         </div>
       </aside>
@@ -336,12 +336,12 @@ export const Layout: React.FC<LayoutProps> = ({
                     onChangeView(item.id);
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg ${
+                  className={`w-full ${item.id === 'espelho' ? 'flex flex-col items-center justify-center' : 'flex items-center'} space-x-3 px-4 py-3 rounded-lg ${
                     currentView === item.id ? 'bg-primary-700' : ''
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+                  <span className={item.id === 'espelho' ? 'font-semibold text-base text-center w-full' : ''}>{item.label}</span>
                 </button>
               ) : (
                 <div key="cadastros">
