@@ -336,8 +336,9 @@ export const StorageService = {
           cpf: row.cpf || '',
           email: row.email || '',
           permissoes: mergedPerms,
-          // Usar preferences do Neon se existir, senão manter local
           preferences: prefs || prefsMap.get(row.id),
+          categoria: row.categoria || '',
+          unidadesTomador: row.unidadesTomador ? (typeof row.unidadesTomador === 'string' ? JSON.parse(row.unidadesTomador) : row.unidadesTomador) : [],
         };
       });
 
