@@ -314,8 +314,10 @@ export const Layout: React.FC<LayoutProps> = ({
               <span className="block text-xs mt-1 text-center w-full">
                 {(() => {
                   const session = StorageService.getSession();
-                  if (session?.user?.nome) {
-                    const partes = session.user.nome.split(' ');
+                  let nome = session?.user?.nome;
+                  if (!nome && session?.user?.username) nome = session.user.username;
+                  if (nome) {
+                    const partes = nome.split(' ');
                     return partes.length > 1 ? `${partes[0]} ${partes[1]}` : partes[0];
                   }
                   return perfilNavItem.label;
