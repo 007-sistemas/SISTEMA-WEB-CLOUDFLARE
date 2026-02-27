@@ -43,6 +43,12 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isCadastrosOpen, setIsCadastrosOpen] = React.useState(true);
   const [preferences, setPreferences] = React.useState<any>(null);
   const [pendentesCount, setPendentesCount] = React.useState(0);
+  // Detecta se é tomador e pega unidades autorizadas
+  const session = StorageService.getSession();
+  const isTomador = session?.user?.categoria === 'tomador';
+  const unidadesTomador = isTomador && Array.isArray(session?.user?.unidadesTomador)
+    ? session.user.unidadesTomador
+    : null;
 
   const applyPreferences = (prefs: any) => {
     if (!prefs) return;
@@ -87,15 +93,26 @@ export const Layout: React.FC<LayoutProps> = ({
       try {
         const remoteRaw = await (await import('../services/api')).apiGet<any[]>('sync?action=list_justificativas');
         const remote = remoteRaw.map(j => j.status === 'Aguardando autorização' ? { ...j, status: 'Pendente' } : j);
-        const pending = remote.filter(j => j.status === 'Pendente');
+        let pending = remote.filter(j => j.status === 'Pendente');
+        if (isTomador && unidadesTomador && unidadesTomador.length > 0) {
+          pending = pending.filter(j => {
+            const hospitalId = j.hospitalId || (j.pontoId ? (StorageService.getPontos().find(p => p.id === j.pontoId)?.hospitalId) : null);
+            return hospitalId && unidadesTomador.includes(String(hospitalId));
+          });
+        }
         setPendentesCount(pending.length);
       } catch (err) {
         const all = StorageService.getJustificativas();
-        const pending = all.filter(j => j.status === 'Pendente');
+        let pending = all.filter(j => j.status === 'Pendente');
+        if (isTomador && unidadesTomador && unidadesTomador.length > 0) {
+          pending = pending.filter(j => {
+            const hospitalId = j.hospitalId || (j.pontoId ? (StorageService.getPontos().find(p => p.id === j.pontoId)?.hospitalId) : null);
+            return hospitalId && unidadesTomador.includes(String(hospitalId));
+          });
+        }
         setPendentesCount(pending.length);
       }
     };
-    
     countPendentes();
     // Recarregar a cada 5 segundos para atualizar badge em tempo real
     const interval = setInterval(countPendentes, 5000);
@@ -137,25 +154,28 @@ export const Layout: React.FC<LayoutProps> = ({
   const [showPerfil, setShowPerfil] = React.useState(true);
 
   React.useEffect(() => {
+    if (isTomador) {
+      // Tomador só vê Justificativa de Plantão
+      setNavItems([
+        { id: 'autorizacao', label: 'Justificativa de Plantão', icon: CheckSquare, permissionKey: 'autorizacao' }
+      ]);
+      setCadastrosItems([]);
+      setShowPerfil(false);
+      return;
+    }
     const filtered = mainNavItems.filter(item => {
-      // Sem permissões definidas, não mostrar nada (mais seguro)
       if (!permissions) return false;
       return permissions[item.permissionKey as keyof HospitalPermissions] === true;
     });
-
     const cadastroFiltered = cadastroNavItems.filter(item => {
-      // Sem permissões definidas, não mostrar nada (mais seguro)
       if (!permissions) return false;
       return permissions[item.permissionKey as keyof HospitalPermissions] === true;
     });
-
-    // Só adiciona o agrupador Cadastros se houver pelo menos um subitem visível
     if (cadastroFiltered.length > 0) {
       setNavItems([...filtered, cadastrosGroup].sort((a, b) => a.label.localeCompare(b.label)));
     } else {
       setNavItems(filtered.sort((a, b) => a.label.localeCompare(b.label)));
     }
-
     setCadastrosItems(cadastroFiltered);
     setShowPerfil(!permissions || permissions[perfilNavItem.permissionKey as keyof HospitalPermissions]);
   }, [permissions]);
