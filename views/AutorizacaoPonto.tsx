@@ -681,7 +681,12 @@ export const AutorizacaoPonto: React.FC = () => {
                 <tbody className="divide-y divide-gray-100">
                   {getFilteredHistorico().map((just) => {
                     const ponto = just.pontoId ? StorageService.getPontos().find(p => p.id === just.pontoId) : null;
-                    const hospital = ponto ? hospitais.find(h => h.id === ponto.hospitalId) : null;
+                    let hospital = null;
+                    if (ponto) {
+                      hospital = hospitais.find(h => h.id === ponto.hospitalId);
+                    } else if (just.hospitalId) {
+                      hospital = hospitais.find(h => String(h.id) === String(just.hospitalId));
+                    }
                     const pontoInfo = getPontoInfo(just);
                     return (
                       <tr key={just.id} className="hover:bg-gray-50/50 transition-colors">
