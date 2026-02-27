@@ -88,6 +88,7 @@ export const Management: React.FC = () => {
       permissoes.gestao = false;
     } else if (categoria === 'tomador') {
       permissoes.autorizacao = true;
+      permissoes.perfil = true;
     }
     setFormData(prev => ({ ...prev, categoria, permissoes }));
   };
