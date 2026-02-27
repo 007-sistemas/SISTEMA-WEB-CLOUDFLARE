@@ -155,29 +155,27 @@ export const Layout: React.FC<LayoutProps> = ({
 
   React.useEffect(() => {
     if (isTomador) {
-      // Tomador vê Justificativa de Plantão, mas o perfil só no rodapé
       setNavItems([
         { id: 'autorizacao', label: 'Justificativa de Plantão', icon: CheckSquare, permissionKey: 'autorizacao' }
       ]);
       setCadastrosItems([]);
-      setShowPerfil(true);
-      return;
-    }
-    const filtered = mainNavItems.filter(item => {
-      if (!permissions) return false;
-      return permissions[item.permissionKey as keyof HospitalPermissions] === true;
-    });
-    const cadastroFiltered = cadastroNavItems.filter(item => {
-      if (!permissions) return false;
-      return permissions[item.permissionKey as keyof HospitalPermissions] === true;
-    });
-    if (cadastroFiltered.length > 0) {
-      setNavItems([...filtered, cadastrosGroup].sort((a, b) => a.label.localeCompare(b.label)));
     } else {
-      setNavItems(filtered.sort((a, b) => a.label.localeCompare(b.label)));
+      const filtered = mainNavItems.filter(item => {
+        if (!permissions) return false;
+        return permissions[item.permissionKey as keyof HospitalPermissions] === true;
+      });
+      const cadastroFiltered = cadastroNavItems.filter(item => {
+        if (!permissions) return false;
+        return permissions[item.permissionKey as keyof HospitalPermissions] === true;
+      });
+      if (cadastroFiltered.length > 0) {
+        setNavItems([...filtered, cadastrosGroup].sort((a, b) => a.label.localeCompare(b.label)));
+      } else {
+        setNavItems(filtered.sort((a, b) => a.label.localeCompare(b.label)));
+      }
+      setCadastrosItems(cadastroFiltered);
     }
-    setCadastrosItems(cadastroFiltered);
-    setShowPerfil(!permissions || permissions[perfilNavItem.permissionKey as keyof HospitalPermissions]);
+    setShowPerfil(true); // Sempre mostra o botão Meu Perfil para todos
   }, [permissions]);
 
   // Não aplicar preferências de abas para o agrupador Cadastros nem seus subitens
