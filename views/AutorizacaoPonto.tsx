@@ -566,7 +566,7 @@ export const AutorizacaoPonto: React.FC = () => {
                             </td>
                             <td className="px-4 py-3">
                               {just.setorId ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary-100 text-primary-800 border border-primary-200">
                                   <MapPin className="h-3 w-3 mr-1" />
                                   {setoresDisponiveis.find(s => String(s.id) === String(just.setorId))?.nome || `ID: ${just.setorId}`}
                                 </span>
@@ -739,7 +739,7 @@ export const AutorizacaoPonto: React.FC = () => {
                         <td className="px-4 py-3 text-xs">{hospital?.nome || '-'}</td>
                         <td className="px-4 py-3">
                           {just.setorId ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary-100 text-primary-800 border border-primary-200">
                               <MapPin className="h-3 w-3 mr-1" />
                               {setoresDisponiveis.find(s => String(s.id) === String(just.setorId))?.nome || `ID: ${just.setorId}`}
                             </span>
