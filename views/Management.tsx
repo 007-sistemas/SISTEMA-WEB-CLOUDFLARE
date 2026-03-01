@@ -1,3 +1,8 @@
+import React, { useState, useEffect } from 'react';
+import { Manager, HospitalPermissions } from '../types';
+import { StorageService } from '../services/storage';
+import { Plus, Save, Trash2, Edit2, Shield, Lock, X, Briefcase, AlertCircle } from 'lucide-react';
+
 // Função para formatar CPF visualmente
 function formatCpf(cpf: string) {
   const onlyNumbers = (cpf || '').replace(/\D/g, '').slice(0, 11);
@@ -7,45 +12,13 @@ function formatCpf(cpf: string) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
-import React, { useState, useEffect } from 'react';
-import { Manager, HospitalPermissions } from '../types';
-import { StorageService } from '../services/storage';
-import { Plus, Save, Trash2, Edit2, Shield, Lock, X, Briefcase, AlertCircle } from 'lucide-react';
-
 export const Management: React.FC = () => {
   const [managers, setManagers] = useState<Manager[]>([]);
   const [filterNome, setFilterNome] = useState('');
   const [filterCategoria, setFilterCategoria] = useState('');
   const [filterUnidade, setFilterUnidade] = useState('');
   const [unidades, setUnidades] = useState<{id: string; nome: string}[]>([]);
-
-  // Garante que todos os gestores tenham acesso a setores
-  useEffect(() => {
-    const all = StorageService.getManagers();
-    let changed = false;
-    all.forEach(m => {
-      if (!m.permissoes) m.permissoes = {} as any;
-      if (!m.permissoes.setores) {
-        m.permissoes.setores = true;
-        changed = true;
-      }
-    });
-    if (changed) {
-      all.forEach(StorageService.saveManager);
-    }
-    setManagers(StorageService.getManagers());
-    
-    // Carregar unidades
-    try {
-      const hospitais = StorageService.getHospitais();
-      setUnidades(hospitais.map(h => ({ id: h.id, nome: h.nome })));
-    } catch (err) {
-      console.error('Erro ao carregar hospitais:', err);
-      setUnidades([]);
-    }
-  }, []);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // Removido: estados de auditoria e consolidação
   const [duplicateManager, setDuplicateManager] = useState<Manager | null>(null);
   
   const initialFormState: Manager & { categoria?: string; unidadesTomador?: string[] } = {
@@ -75,6 +48,33 @@ export const Management: React.FC = () => {
   
   const [formData, setFormData] = useState<Manager & { categoria?: string; unidadesTomador?: string[] }>(initialFormState);
   
+  // Garante que todos os gestores tenham acesso a setores e carrega dados iniciais
+  useEffect(() => {
+    try {
+      const all = StorageService.getManagers();
+      let changed = false;
+      all.forEach(m => {
+        if (!m.permissoes) m.permissoes = {} as any;
+        if (!m.permissoes.setores) {
+          m.permissoes.setores = true;
+          changed = true;
+        }
+      });
+      if (changed) {
+        all.forEach(StorageService.saveManager);
+      }
+      setManagers(StorageService.getManagers());
+      
+      // Carregar unidades
+      const hospitais = StorageService.getHospitais();
+      setUnidades(hospitais.map(h => ({ id: h.id, nome: h.nome })));
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err);
+      setManagers([]);
+      setUnidades([]);
+    }
+  }, []);
+
   // Atualiza permissões conforme categoria
   const handleCategoriaChange = (categoria: string) => {
     let permissoes: HospitalPermissions = {
@@ -536,7 +536,7 @@ export const Management: React.FC = () => {
 
           {/* Managers Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {managersFilteredFiltered.map(m => (
+          {managersFiltered.map(m => (
             <div key={m.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group relative">
               <div className="flex justify-between items-start mb-4 gap-3">
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
