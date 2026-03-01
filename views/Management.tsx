@@ -55,7 +55,9 @@ export const Management: React.FC = () => {
       let changed = false;
       all.forEach(m => {
         if (!m.permissoes) m.permissoes = {} as any;
-        if (!m.permissoes.setores) {
+        
+        // Adiciona permissão de setores apenas para gestores e funcionários (não para tomadores)
+        if ((m.categoria === 'gestor' || m.categoria === 'funcionario' || !m.categoria) && !m.permissoes.setores) {
           m.permissoes.setores = true;
           changed = true;
         }
