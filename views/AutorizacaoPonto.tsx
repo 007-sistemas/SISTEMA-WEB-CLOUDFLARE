@@ -25,7 +25,16 @@ export const AutorizacaoPonto: React.FC = () => {
   const [filterDataFim, setFilterDataFim] = useState('');
 
   useEffect(() => {
+    // Carrega os dados imediatamente
     loadData();
+
+    // Configura polling para atualizar automaticamente a cada 30 segundos
+    const interval = setInterval(() => {
+      loadData();
+    }, 30000); // 30 segundos
+
+    // Limpa o intervalo quando o componente desmonta
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
