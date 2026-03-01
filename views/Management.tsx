@@ -61,6 +61,34 @@ export const Management: React.FC = () => {
           m.permissoes.setores = true;
           changed = true;
         }
+        
+        // CLEANUP: Remove permissões extras de tomadores (mantém apenas autorizacao e perfil)
+        if (m.categoria === 'tomador') {
+          const permissoesCorretas = ['autorizacao', 'perfil'];
+          let hasExtras = false;
+          
+          Object.keys(m.permissoes).forEach(key => {
+            if (!permissoesCorretas.includes(key) && m.permissoes[key as keyof HospitalPermissions] === true) {
+              m.permissoes[key as keyof HospitalPermissions] = false;
+              hasExtras = true;
+            }
+          });
+          
+          // Garante que as permissões corretas estão ativadas
+          if (!m.permissoes.autorizacao) {
+            m.permissoes.autorizacao = true;
+            changed = true;
+          }
+          if (!m.permissoes.perfil) {
+            m.permissoes.perfil = true;
+            changed = true;
+          }
+          
+          if (hasExtras) {
+            changed = true;
+            console.log(`🧹 Permissões extras removidas do tomador: ${m.username}`);
+          }
+        }
       });
       if (changed) {
         all.forEach(StorageService.saveManager);
