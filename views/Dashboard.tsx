@@ -4,10 +4,31 @@ import { RegistroPonto, Cooperado, Hospital } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Download, Search, Filter, Calendar } from 'lucide-react';
 
+// Função helper para converter hex para rgba com transparência
+const hexToRgba = (hex: string, alpha: number = 0.1): string => {
+  if (hex.startsWith('rgb')) {
+    return hex.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+  }
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, ${alpha})`
+    : `rgba(168, 85, 247, ${alpha})`; // fallback roxo
+};
+
 export const Dashboard: React.FC = () => {
   const [pontos, setPontos] = useState<RegistroPonto[]>([]);
   const [hospitais, setHospitais] = useState<Hospital[]>([]);
   const [filterCooperado, setFilterCooperado] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#a855f7'); // fallback roxo
+  
+  useEffect(() => {
+    // Obter cor primária do CSS
+    const rootStyles = getComputedStyle(document.documentElement);
+    const primary600 = rootStyles.getPropertyValue('--color-primary-600').trim();
+    if (primary600) {
+      setPrimaryColor(primary600);
+    }
+  }, []);
   
   useEffect(() => {
     const loadData = async () => {
@@ -89,9 +110,9 @@ export const Dashboard: React.FC = () => {
                   <YAxis fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
-                    cursor={{fill: '#f3e8ff'}}
+                    cursor={{fill: hexToRgba(primaryColor, 0.1)}}
                   />
-                  <Bar dataKey="Registros" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Registros" fill={primaryColor} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
