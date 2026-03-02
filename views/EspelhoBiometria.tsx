@@ -708,33 +708,50 @@ export const EspelhoBiometria: React.FC = () => {
                       <label className="block text-xs font-bold text-gray-500 mb-1">Unidade</label>
                       <select className="w-full p-2 rounded border" value={justHospitalId} onChange={e => setJustHospitalId(e.target.value)} required>
                         <option value="">Selecione</option>
-                        {hospitais.map(h => <option key={h.id} value={h.id}>{h.nome}</option>)}
+                        {hospitais.map(h => {
+                          const bloqueado = cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(h.id);
+                          return (
+                            <option key={h.id} value={h.id} disabled={false}>
+                              {h.nome} {bloqueado ? '🔒' : ''}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Setor</label>
-                      <select className="w-full p-2 rounded border" value={justSetorId} onChange={e => setJustSetorId(e.target.value)} required>
+                      <select className="w-full p-2 rounded border" value={justSetorId} onChange={e => setJustSetorId(e.target.value)} required disabled={
+                        !!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId)
+                      }>
                         <option value="">Selecione</option>
                         {setores.filter(s => !justHospitalId || s.hospitalId === justHospitalId).map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Data do Plantão</label>
-                      <input type="date" className="w-full p-2 rounded border" value={justDataPlantao} onChange={e => setJustDataPlantao(e.target.value)} required />
+                      <input type="date" className="w-full p-2 rounded border" value={justDataPlantao} onChange={e => setJustDataPlantao(e.target.value)} required
+                        disabled={!!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Horário de Entrada</label>
-                      <input type="time" className="w-full p-2 rounded border" value={justEntrada} onChange={e => setJustEntrada(e.target.value)} required />
+                      <input type="time" className="w-full p-2 rounded border" value={justEntrada} onChange={e => setJustEntrada(e.target.value)} required
+                        disabled={!!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Horário de Saída</label>
-                      <input type="time" className="w-full p-2 rounded border" value={justSaida} onChange={e => setJustSaida(e.target.value)} required />
+                      <input type="time" className="w-full p-2 rounded border" value={justSaida} onChange={e => setJustSaida(e.target.value)} required
+                        disabled={!!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId)}
+                      />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Motivo da Falha</label>
-                      <select className="w-full p-2 rounded border" value={justMotivo} onChange={e => setJustMotivo(e.target.value)} required>
+                      <select className="w-full p-2 rounded border" value={justMotivo} onChange={e => setJustMotivo(e.target.value)} required
+                        disabled={!!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId)}
+                      >
                         <option value="Esquecimento">Esquecimento</option>
                         <option value="Falha Técnica">Falha Técnica</option>
                         <option value="Outro Motivo">Outro Motivo</option>
@@ -742,12 +759,15 @@ export const EspelhoBiometria: React.FC = () => {
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-bold text-gray-500 mb-1">Descrição (opcional)</label>
-                      <input className="w-full p-2 rounded border" value={justDescricao} onChange={e => setJustDescricao(e.target.value)} maxLength={200} />
+                      <input className="w-full p-2 rounded border" value={justDescricao} onChange={e => setJustDescricao(e.target.value)} maxLength={200}
+                        disabled={!!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId)}
+                      />
                     </div>
                   </div>
                   <div className="flex gap-2 mt-2">
                     <button type="button" className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-bold" onClick={resetJustForm} disabled={justLoading}>Limpar</button>
-                    <button type="submit" className="px-4 py-2 rounded bg-primary-600 text-white font-bold flex items-center gap-2 disabled:opacity-60" disabled={justLoading}>
+                    <button type="submit" className="px-4 py-2 rounded bg-primary-600 text-white font-bold flex items-center gap-2 disabled:opacity-60"
+                      disabled={justLoading || (!!justHospitalId && cooperadoData?.unidadesJustificativa && !cooperadoData.unidadesJustificativa.includes(justHospitalId))}>
                       <span className="text-lg">➕</span> Incluir
                     </button>
                   </div>

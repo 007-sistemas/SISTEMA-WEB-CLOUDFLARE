@@ -525,7 +525,8 @@ export const StorageService = {
     const index = list.findIndex(c => c.id === cooperado.id);
     const normalized: Cooperado = {
       ...cooperado,
-      producaoPorCpf: cooperado.producaoPorCpf || 'Não'
+      producaoPorCpf: cooperado.producaoPorCpf || 'Não',
+      unidadesJustificativa: cooperado.unidadesJustificativa || []
     };
     if (index >= 0) {
       list[index] = normalized;
@@ -545,7 +546,8 @@ export const StorageService = {
       matricula: normalized.matricula,
       categoriaProfissional: normalized.categoriaProfissional,
       status: normalized.status,
-      producaoPorCpf: normalized.producaoPorCpf
+      producaoPorCpf: normalized.producaoPorCpf,
+      unidadesJustificativa: normalized.unidadesJustificativa
     });
 
     // Backup: atualizar diretamente via /api/cooperados (Cloudflare)
@@ -558,7 +560,8 @@ export const StorageService = {
       matricula: normalized.matricula,
       categoriaProfissional: normalized.categoriaProfissional,
       status: normalized.status,
-      producaoPorCpf: normalized.producaoPorCpf
+      producaoPorCpf: normalized.producaoPorCpf,
+      unidadesJustificativa: normalized.unidadesJustificativa
     }).catch((err) => {
       console.warn('[COOPERADOS] Falha ao atualizar via API:', err);
     });

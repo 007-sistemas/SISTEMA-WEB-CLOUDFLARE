@@ -31,6 +31,10 @@ export interface Cooperado {
   producaoPorCpf: 'Sim' | 'Não';
   biometrias: Biometria[];
   updatedAt: string;
+  /**
+   * Lista de IDs das unidades (hospitais) em que o cooperado pode justificar plantão
+   */
+  unidadesJustificativa?: string[];
 }
 
 export interface Setor {
