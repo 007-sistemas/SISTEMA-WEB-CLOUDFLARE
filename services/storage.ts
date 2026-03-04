@@ -1313,7 +1313,6 @@ export const StorageService = {
         console.log('[criarSolicitacaoLiberacao] Resposta não é JSON, usando texto');
         result = { message: 'Solicitação criada', success: true };
       }
-      }
       
       StorageService.logAudit(
         'SOLICITACAO_LIBERACAO_CRIADA', 
