@@ -44,21 +44,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'GET') {
-      const { status, cooperado_id } = req.query;
+      const { status, cooperado_id, hospital_id } = req.query;
       const statusFilter = typeof status === 'string' ? status : undefined;
       const cooperadoFilter = typeof cooperado_id === 'string' ? cooperado_id : undefined;
+      const hospitalFilter = typeof hospital_id === 'string' ? hospital_id : undefined;
 
       let rows: any[] = [];
 
       // Tentar com JOIN
       try {
-        if (statusFilter && cooperadoFilter) {
+        if (statusFilter && cooperadoFilter && hospitalFilter) {
+          rows = await sql`
+            SELECT s.*, c.nome as cooperado_nome, c.cpf as cooperado_cpf, h.nome as hospital_nome 
+            FROM solicitacoes_liberacao s 
+            LEFT JOIN cooperados c ON s.cooperado_id = c.id 
+            LEFT JOIN hospitals h ON s.hospital_id = h.id 
+            WHERE s.status = ${statusFilter} AND s.cooperado_id = ${cooperadoFilter} AND s.hospital_id = ${hospitalFilter}
+            ORDER BY s.created_at DESC
+          `;
+        } else if (statusFilter && cooperadoFilter) {
           rows = await sql`
             SELECT s.*, c.nome as cooperado_nome, c.cpf as cooperado_cpf, h.nome as hospital_nome 
             FROM solicitacoes_liberacao s 
             LEFT JOIN cooperados c ON s.cooperado_id = c.id 
             LEFT JOIN hospitals h ON s.hospital_id = h.id 
             WHERE s.status = ${statusFilter} AND s.cooperado_id = ${cooperadoFilter}
+            ORDER BY s.created_at DESC
+          `;
+        } else if (statusFilter && hospitalFilter) {
+          rows = await sql`
+            SELECT s.*, c.nome as cooperado_nome, c.cpf as cooperado_cpf, h.nome as hospital_nome 
+            FROM solicitacoes_liberacao s 
+            LEFT JOIN cooperados c ON s.cooperado_id = c.id 
+            LEFT JOIN hospitals h ON s.hospital_id = h.id 
+            WHERE s.status = ${statusFilter} AND s.hospital_id = ${hospitalFilter}
+            ORDER BY s.created_at DESC
+          `;
+        } else if (cooperadoFilter && hospitalFilter) {
+          rows = await sql`
+            SELECT s.*, c.nome as cooperado_nome, c.cpf as cooperado_cpf, h.nome as hospital_nome 
+            FROM solicitacoes_liberacao s 
+            LEFT JOIN cooperados c ON s.cooperado_id = c.id 
+            LEFT JOIN hospitals h ON s.hospital_id = h.id 
+            WHERE s.cooperado_id = ${cooperadoFilter} AND s.hospital_id = ${hospitalFilter}
             ORDER BY s.created_at DESC
           `;
         } else if (statusFilter) {
@@ -79,6 +107,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             WHERE s.cooperado_id = ${cooperadoFilter}
             ORDER BY s.created_at DESC
           `;
+        } else if (hospitalFilter) {
+          rows = await sql`
+            SELECT s.*, c.nome as cooperado_nome, c.cpf as cooperado_cpf, h.nome as hospital_nome 
+            FROM solicitacoes_liberacao s 
+            LEFT JOIN cooperados c ON s.cooperado_id = c.id 
+            LEFT JOIN hospitals h ON s.hospital_id = h.id 
+            WHERE s.hospital_id = ${hospitalFilter}
+            ORDER BY s.created_at DESC
+          `;
         } else {
           rows = await sql`
             SELECT s.*, c.nome as cooperado_nome, c.cpf as cooperado_cpf, h.nome as hospital_nome 
@@ -92,10 +129,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.warn('[solicitacoes-liberacao] JOIN falhou, usando fallback:', joinError?.message);
         // Fallback: sem JOIN
         try {
-          if (statusFilter && cooperadoFilter) {
+          if (statusFilter && cooperadoFilter && hospitalFilter) {
+            rows = await sql`
+              SELECT * FROM solicitacoes_liberacao 
+              WHERE status = ${statusFilter} AND cooperado_id = ${cooperadoFilter} AND hospital_id = ${hospitalFilter}
+              ORDER BY created_at DESC
+            `;
+          } else if (statusFilter && cooperadoFilter) {
             rows = await sql`
               SELECT * FROM solicitacoes_liberacao 
               WHERE status = ${statusFilter} AND cooperado_id = ${cooperadoFilter}
+              ORDER BY created_at DESC
+            `;
+          } else if (statusFilter && hospitalFilter) {
+            rows = await sql`
+              SELECT * FROM solicitacoes_liberacao 
+              WHERE status = ${statusFilter} AND hospital_id = ${hospitalFilter}
+              ORDER BY created_at DESC
+            `;
+          } else if (cooperadoFilter && hospitalFilter) {
+            rows = await sql`
+              SELECT * FROM solicitacoes_liberacao 
+              WHERE cooperado_id = ${cooperadoFilter} AND hospital_id = ${hospitalFilter}
               ORDER BY created_at DESC
             `;
           } else if (statusFilter) {
@@ -108,6 +163,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             rows = await sql`
               SELECT * FROM solicitacoes_liberacao 
               WHERE cooperado_id = ${cooperadoFilter}
+              ORDER BY created_at DESC
+            `;
+          } else if (hospitalFilter) {
+            rows = await sql`
+              SELECT * FROM solicitacoes_liberacao 
+              WHERE hospital_id = ${hospitalFilter}
               ORDER BY created_at DESC
             `;
           } else {

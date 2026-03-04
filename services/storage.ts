@@ -1240,7 +1240,7 @@ export const StorageService = {
 
   // --- SOLICITAÇÕES DE LIBERAÇÃO ---
   
-  getSolicitacoesLiberacao: async (filters?: { status?: string; cooperado_id?: string }) => {
+  getSolicitacoesLiberacao: async (filters?: { status?: string; cooperado_id?: string; hospital_id?: string }) => {
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
       let url = `${API_BASE_URL}/api/solicitacoes-liberacao`;
@@ -1248,6 +1248,7 @@ export const StorageService = {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
       if (filters?.cooperado_id) params.append('cooperado_id', filters.cooperado_id);
+      if (filters?.hospital_id) params.append('hospital_id', filters.hospital_id);
       
       if (params.toString()) {
         url += `?${params.toString()}`;

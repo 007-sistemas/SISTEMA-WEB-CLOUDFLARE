@@ -87,15 +87,28 @@ export const AutorizacaoPonto: React.FC = () => {
     const cooperadosList = StorageService.getCooperados();
     setCooperados(cooperadosList);
 
-    // Carregar solicitações de liberação pendentes para gestor/funcionário
+    // Carregar solicitações de liberação pendentes
     try {
       const isTomador = session?.user?.categoria === 'tomador';
-      if (!isTomador) {
-        const solicitacoes = await StorageService.getSolicitacoesLiberacao({ status: 'pendente' });
-        setPendingSolicitacoesLiberacao(Array.isArray(solicitacoes) ? solicitacoes : []);
-      } else {
-        setPendingSolicitacoesLiberacao([]);
+      let solicitacoes: any[] = [];
+
+      if (isTomador && unidadesTomador && unidadesTomador.length > 0) {
+        // Tomador: carregar apenas das suas unidades
+        for (const hospitalId of unidadesTomador) {
+          const sols = await StorageService.getSolicitacoesLiberacao({ 
+            status: 'pendente',
+            hospital_id: String(hospitalId)
+          });
+          if (Array.isArray(sols)) {
+            solicitacoes = [...solicitacoes, ...sols];
+          }
+        }
+      } else if (!isTomador) {
+        // Gestor/Funcionário: carregar todas
+        solicitacoes = await StorageService.getSolicitacoesLiberacao({ status: 'pendente' });
       }
+
+      setPendingSolicitacoesLiberacao(Array.isArray(solicitacoes) ? solicitacoes : []);
     } catch (error) {
       console.warn('[AutorizacaoPonto] Erro ao carregar solicitações de liberação:', error);
       setPendingSolicitacoesLiberacao([]);
