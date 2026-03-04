@@ -110,6 +110,10 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
   const cooperadoLogadoId = mode === 'cooperado' && session?.type === 'COOPERADO' ? session?.user?.id : null;
   const cooperadoLogadoData = mode === 'cooperado' && session?.type === 'COOPERADO' ? session?.user : null;
   const cooperadoEfetivo = mode === 'cooperado' ? resolveCooperado(session?.user, cooperados) : null;
+  const unidadesAutorizadasJustificativa = (cooperadoEfetivo?.unidadesJustificativa || []).map(id => String(id));
+  const possuiRestricaoPorUnidade = mode === 'cooperado' && unidadesAutorizadasJustificativa.length > 0;
+  const unidadeSelecionadaAutorizada = !missingHospitalId || !possuiRestricaoPorUnidade || unidadesAutorizadasJustificativa.includes(String(missingHospitalId));
+  const bloqueadoPorUnidadeNaoAutorizada = !!missingHospitalId && possuiRestricaoPorUnidade && !unidadeSelecionadaAutorizada;
 
   // Helper para normalizar status recusado/rejeitado (declarado primeiro para uso em loadData)
   const isRecusadoStatus = (status?: string | null) => {
@@ -1429,7 +1433,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                 className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
                 value={missingSetorId}
                 onChange={e => setMissingSetorId(e.target.value)}
-                disabled={!missingHospitalId}
+                disabled={!missingHospitalId || bloqueadoPorUnidadeNaoAutorizada}
               >
                 <option value="">Selecione</option>
                 {missingSetores.map(s => (
@@ -1445,6 +1449,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                 className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
                 value={missingDate}
                 onChange={e => setMissingDate(e.target.value)}
+                disabled={bloqueadoPorUnidadeNaoAutorizada}
               />
             </div>
 
@@ -1455,6 +1460,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                 className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
                 value={missingEntrada}
                 onChange={e => setMissingEntrada(e.target.value)}
+                disabled={bloqueadoPorUnidadeNaoAutorizada}
               />
             </div>
 
@@ -1465,6 +1471,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                 className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
                 value={missingSaida}
                 onChange={e => setMissingSaida(e.target.value)}
+                disabled={bloqueadoPorUnidadeNaoAutorizada}
               />
             </div>
 
@@ -1474,6 +1481,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                 className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                 value={missingReason}
                 onChange={e => setMissingReason(e.target.value)}
+                disabled={bloqueadoPorUnidadeNaoAutorizada}
               >
                 <option value="">-- Selecione um motivo --</option>
                 <option value="Esquecimento">Esquecimento</option>
@@ -1492,10 +1500,17 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                   placeholder="Descreva o motivo..."
                   value={missingDesc}
                   onChange={e => setMissingDesc(e.target.value)}
+                  disabled={bloqueadoPorUnidadeNaoAutorizada}
                 />
               </div>
             )}
           </div>
+
+          {bloqueadoPorUnidadeNaoAutorizada && (
+            <div className="mt-3 text-sm text-red-600 font-medium">
+              Unidade não autorizada para justificativa. Selecione uma unidade autorizada para habilitar o preenchimento.
+            </div>
+          )}
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-4">
             <div className="text-xs text-gray-500">Use este formulário apenas quando não houve registro de entrada e saída.</div>
@@ -1508,7 +1523,8 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
               </button>
               <button
                 onClick={submitMissingShift}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-400"
+                disabled={bloqueadoPorUnidadeNaoAutorizada}
               >
                 <PlusCircle className="h-4 w-4" />
                 Incluir
