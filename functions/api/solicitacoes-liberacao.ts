@@ -1,13 +1,13 @@
 // Cloudflare Pages Function
 import { createClient } from '@libsql/client';
 
-const turso = createClient({
-  url: process.env.DATABASE_URL || '',
-  authToken: process.env.DATABASE_AUTH_TOKEN || '',
-});
-
 export async function onRequestPost(context: any) {
-  const { request } = context;
+  const { request, env } = context;
+  
+  const turso = createClient({
+    url: env.DATABASE_URL || '',
+    authToken: env.DATABASE_AUTH_TOKEN || '',
+  });
   
   console.log('[Cloudflare] POST /api/solicitacoes-liberacao');
   
@@ -91,6 +91,13 @@ export async function onRequestPost(context: any) {
 }
 
 export async function onRequestGet(context: any) {
+  const { request, env } = context;
+  
+  const turso = createClient({
+    url: env.DATABASE_URL || '',
+    authToken: env.DATABASE_AUTH_TOKEN || '',
+  });
+  
   try {
     const url = new URL(context.request.url);
     const status = url.searchParams.get('status');
@@ -136,8 +143,15 @@ export async function onRequestGet(context: any) {
 }
 
 export async function onRequestPut(context: any) {
+  const { request, env } = context;
+  
+  const turso = createClient({
+    url: env.DATABASE_URL || '',
+    authToken: env.DATABASE_AUTH_TOKEN || '',
+  });
+  
   try {
-    const body = await context.request.json();
+    const body = await request.json();
     const { id, status, respondido_por, observacao } = body;
     
     if (!id || !status || !respondido_por) {

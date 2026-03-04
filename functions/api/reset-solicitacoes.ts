@@ -1,12 +1,14 @@
 // Cloudflare Pages Function
 import { createClient } from '@libsql/client';
 
-const turso = createClient({
-  url: process.env.DATABASE_URL || '',
-  authToken: process.env.DATABASE_AUTH_TOKEN || '',
-});
-
-export async function onRequest() {
+export async function onRequest(context: any) {
+  const { env } = context;
+  
+  const turso = createClient({
+    url: env.DATABASE_URL || '',
+    authToken: env.DATABASE_AUTH_TOKEN || '',
+  });
+  
   try {
     // Drop table
     await turso.execute(`DROP TABLE IF EXISTS solicitacoes_liberacao`);
