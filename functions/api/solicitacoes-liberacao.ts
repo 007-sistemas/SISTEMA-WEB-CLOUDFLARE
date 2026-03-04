@@ -1,2 +1,217 @@
-import handler from '../../api/solicitacoes-liberacao';
-export default handler;
+// Cloudflare Pages Function
+import { createClient } from '@libsql/client';
+
+const turso = createClient({
+  url: process.env.DATABASE_URL || '',
+  authToken: process.env.DATABASE_AUTH_TOKEN || '',
+});
+
+export async function onRequestPost(context: any) {
+  const { request } = context;
+  
+  console.log('[Cloudflare] POST /api/solicitacoes-liberacao');
+  
+  try {
+    // Criar tabela se não existir
+    try {
+      await turso.execute(`
+        CREATE TABLE IF NOT EXISTS solicitacoes_liberacao (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cooperado_id TEXT NOT NULL,
+          hospital_id TEXT NOT NULL,
+          data_solicitacao TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pendente',
+          data_resposta TEXT,
+          respondido_por TEXT,
+          observacao TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    } catch (tableError) {
+      console.log('[Cloudflare] Tabela já existe');
+    }
+    
+    const body = await request.json();
+    const { cooperado_id, hospital_id, observacao } = body;
+    
+    console.log('[Cloudflare] Dados recebidos:', { cooperado_id, hospital_id });
+    
+    if (!cooperado_id || !hospital_id) {
+      return new Response(JSON.stringify({ 
+        error: 'cooperado_id e hospital_id são obrigatórios' 
+      }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Verificar duplicata
+    const existente = await turso.execute({
+      sql: `SELECT id FROM solicitacoes_liberacao WHERE cooperado_id = ? AND hospital_id = ? AND status = 'pendente'`,
+      args: [String(cooperado_id), String(hospital_id)]
+    });
+    
+    if (existente.rows.length > 0) {
+      return new Response(JSON.stringify({ 
+        error: 'Já existe uma solicitação pendente para esta unidade' 
+      }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const dataAtual = new Date().toISOString();
+    
+    const result = await turso.execute({
+      sql: `INSERT INTO solicitacoes_liberacao (cooperado_id, hospital_id, data_solicitacao, status, observacao) VALUES (?, ?, ?, 'pendente', ?)`,
+      args: [String(cooperado_id), String(hospital_id), dataAtual, observacao || null]
+    });
+    
+    console.log('[Cloudflare] Solicitação criada:', result.lastInsertRowid);
+    
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Solicitação criada com sucesso',
+      id: result.lastInsertRowid 
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error: any) {
+    console.error('[Cloudflare] Erro:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Erro ao processar solicitação',
+      details: error.message 
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+export async function onRequestGet(context: any) {
+  try {
+    const url = new URL(context.request.url);
+    const status = url.searchParams.get('status');
+    const cooperado_id = url.searchParams.get('cooperado_id');
+    
+    let query = `
+      SELECT 
+        s.*,
+        c.nome as cooperado_nome,
+        c.cpf as cooperado_cpf,
+        h.nome as hospital_nome
+      FROM solicitacoes_liberacao s
+      LEFT JOIN cooperados c ON s.cooperado_id = c.id
+      LEFT JOIN hospitals h ON s.hospital_id = h.id
+      WHERE 1=1
+    `;
+    
+    const params: any[] = [];
+    
+    if (status) {
+      query += ` AND s.status = ?`;
+      params.push(status);
+    }
+    
+    if (cooperado_id) {
+      query += ` AND s.cooperado_id = ?`;
+      params.push(cooperado_id);
+    }
+    
+    query += ` ORDER BY s.created_at DESC`;
+    
+    const result = await turso.execute({ sql: query, args: params });
+    
+    return new Response(JSON.stringify(result.rows), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+export async function onRequestPut(context: any) {
+  try {
+    const body = await context.request.json();
+    const { id, status, respondido_por, observacao } = body;
+    
+    if (!id || !status || !respondido_por) {
+      return new Response(JSON.stringify({ 
+        error: 'id, status e respondido_por são obrigatórios' 
+      }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Buscar solicitação
+    const solicitacao = await turso.execute({
+      sql: `SELECT cooperado_id, hospital_id FROM solicitacoes_liberacao WHERE id = ?`,
+      args: [id]
+    });
+    
+    if (solicitacao.rows.length === 0) {
+      return new Response(JSON.stringify({ error: 'Solicitação não encontrada' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const { cooperado_id, hospital_id } = solicitacao.rows[0];
+    const dataResposta = new Date().toISOString();
+    
+    // Atualizar solicitação
+    await turso.execute({
+      sql: `UPDATE solicitacoes_liberacao SET status = ?,data_resposta = ?, respondido_por = ?, observacao = ? WHERE id = ?`,
+      args: [status, dataResposta, respondido_por, observacao || null, id]
+    });
+    
+    // Se aprovado, adicionar à lista de autorizados
+    if (status === 'aprovado') {
+      const cooperadoResult = await turso.execute({
+        sql: `SELECT unidades_justificativa FROM cooperados WHERE id = ?`,
+        args: [cooperado_id]
+      });
+      
+      if (cooperadoResult.rows.length > 0) {
+        let unidadesAtuais: string[] = [];
+        const unidadesStr = cooperadoResult.rows[0].unidades_justificativa;
+        
+        if (unidadesStr) {
+          try {
+            unidadesAtuais = JSON.parse(unidadesStr as string);
+            if (!Array.isArray(unidadesAtuais)) unidadesAtuais = [];
+          } catch {
+            unidadesAtuais = [];
+          }
+        }
+        
+        const hospitalIdStr = String(hospital_id);
+        if (!unidadesAtuais.includes(hospitalIdStr)) {
+          unidadesAtuais.push(hospitalIdStr);
+          await turso.execute({
+            sql: `UPDATE cooperados SET unidades_justificativa = ? WHERE id = ?`,
+            args: [JSON.stringify(unidadesAtuais), cooperado_id]
+          });
+        }
+      }
+    }
+    
+    return new Response(JSON.stringify({ 
+      message: `Solicitação ${status} com sucesso` 
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
