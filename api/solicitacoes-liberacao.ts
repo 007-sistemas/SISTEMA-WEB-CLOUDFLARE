@@ -16,21 +16,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
+  console.log('[solicitacoes-liberacao] Método:', req.method);
+
   try {
-    // Criar tabela se não existir
-    await turso.execute(`
-      CREATE TABLE IF NOT EXISTS solicitacoes_liberacao (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cooperado_id TEXT NOT NULL,
-        hospital_id TEXT NOT NULL,
-        data_solicitacao TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pendente',
-        data_resposta TEXT,
-        respondido_por TEXT,
-        observacao TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    // Criar tabela se não existir (silenciosamente)
+    try {
+      await turso.execute(`
+        CREATE TABLE IF NOT EXISTS solicitacoes_liberacao (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cooperado_id TEXT NOT NULL,
+          hospital_id TEXT NOT NULL,
+          data_solicitacao TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pendente',
+          data_resposta TEXT,
+          respondido_por TEXT,
+          observacao TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    } catch (tableError) {
+      console.log('[solicitacoes-liberacao] Tabela já existe ou erro ao criar:', tableError);
+      // Continuar mesmo se a tabela já existir
+    }
 
     if (req.method === 'GET') {
       // Listar solicitações (com filtro opcional por status)

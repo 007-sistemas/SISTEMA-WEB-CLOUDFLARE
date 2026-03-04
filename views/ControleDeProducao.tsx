@@ -1156,23 +1156,38 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
   };
 
   const solicitarLiberacao = async () => {
-    if (!cooperadoLogadoId || !missingHospitalId) return;
+    if (!cooperadoLogadoId || !missingHospitalId) {
+      console.error('[solicitarLiberacao] Dados faltando:', { cooperadoLogadoId, missingHospitalId });
+      alert('❌ Erro: Dados do cooperado ou unidade não encontrados');
+      return;
+    }
+    
+    console.log('[solicitarLiberacao] Iniciando solicitação:', {
+      cooperado_id: cooperadoLogadoId,
+      hospital_id: missingHospitalId,
+      tipos: {
+        cooperado_id: typeof cooperadoLogadoId,
+        hospital_id: typeof missingHospitalId
+      }
+    });
     
     setLoadingSolicitacao(true);
     try {
-      await StorageService.criarSolicitacaoLiberacao({
+      const result = await StorageService.criarSolicitacaoLiberacao({
         cooperado_id: String(cooperadoLogadoId),
         hospital_id: String(missingHospitalId),
         observacao: 'Solicitação de liberação para justificativa de plantão'
       });
       
+      console.log('[solicitarLiberacao] Sucesso:', result);
       setShowModalSolicitacao(false);
       setLoadingSolicitacao(false);
       alert('✅ Solicitação enviada com sucesso! Aguarde aprovação da gestão.');
     } catch (error: any) {
-      console.error('Erro ao solicitar liberação:', error);
+      console.error('[solicitarLiberacao] Erro:', error);
       setLoadingSolicitacao(false);
-      alert(error.message || 'Erro ao enviar solicitação. Tente novamente.');
+      setShowModalSolicitacao(false);
+      alert(`❌ ${error.message || 'Erro ao enviar solicitação. Tente novamente.'}`);
     }
   };
 

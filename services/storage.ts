@@ -1262,28 +1262,45 @@ export const StorageService = {
   }) => {
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-      console.log('[criarSolicitacaoLiberacao] Enviando:', data);
+      const url = `${API_BASE_URL}/api/solicitacoes-liberacao`;
       
-      const response = await fetch(`${API_BASE_URL}/api/solicitacoes-liberacao`, {
+      console.log('[criarSolicitacaoLiberacao] URL:', url);
+      console.log('[criarSolicitacaoLiberacao] Dados:', data);
+      console.log('[criarSolicitacaoLiberacao] API_BASE_URL:', API_BASE_URL || '(vazio - URL relativa)');
+      
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(data)
       });
       
       console.log('[criarSolicitacaoLiberacao] Status:', response.status);
+      console.log('[criarSolicitacaoLiberacao] Status Text:', response.statusText);
+      console.log('[criarSolicitacaoLiberacao] Headers:', Object.fromEntries(response.headers.entries()));
       
       // Tentar ler resposta como texto primeiro
       const responseText = await response.text();
-      console.log('[criarSolicitacaoLiberacao] Resposta:', responseText);
+      console.log('[criarSolicitacaoLiberacao] Resposta (texto):', responseText);
       
       if (!response.ok) {
-        let errorMsg = 'Erro ao criar solicitação';
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMsg = errorData.error || errorMsg;
-        } catch {
-          errorMsg = responseText || errorMsg;
+        let errorMsg = `Erro ${response.status}: ${response.statusText}`;
+        
+        if (response.status === 405) {
+          errorMsg = 'O endpoint ainda não está disponível. Aguarde o deploy completar ou tente novamente em alguns instantes.';
+        } else if (response.status === 404) {
+          errorMsg = 'Endpoint não encontrado. Verifique se o deploy foi concluído.';
+        } else {
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMsg = errorData.error || errorMsg;
+          } catch {
+            errorMsg = responseText || errorMsg;
+          }
         }
+        
         throw new Error(errorMsg);
       }
       
@@ -1291,8 +1308,11 @@ export const StorageService = {
       let result;
       try {
         result = JSON.parse(responseText);
+        console.log('[criarSolicitacaoLiberacao] Resposta (JSON):', result);
       } catch {
-        result = { message: 'Solicitação criada' };
+        console.log('[criarSolicitacaoLiberacao] Resposta não é JSON, usando texto');
+        result = { message: 'Solicitação criada', success: true };
+      }
       }
       
       StorageService.logAudit(
