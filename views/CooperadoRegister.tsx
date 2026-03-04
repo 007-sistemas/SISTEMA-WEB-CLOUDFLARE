@@ -163,7 +163,8 @@ export const CooperadoRegister: React.FC = () => {
       id: formData.id || crypto.randomUUID(),
       updatedAt: new Date().toISOString(),
       producaoPorCpf: formData.producaoPorCpf || 'Não',
-      biometrias: formData.biometrias || []
+      biometrias: formData.biometrias || [],
+      unidadesJustificativa: formData.unidadesJustificativa || []
     };
 
     StorageService.saveCooperado(newCooperado);
@@ -211,7 +212,8 @@ export const CooperadoRegister: React.FC = () => {
       nome: normalizeNome(atualizado.nome || ''),
       id: formData.id,
       updatedAt: new Date().toISOString(),
-      biometrias: formData.biometrias || []
+      biometrias: formData.biometrias || [],
+      unidadesJustificativa: formData.unidadesJustificativa || []
     };
 
     StorageService.saveCooperado(cooperadoAtualizado);
