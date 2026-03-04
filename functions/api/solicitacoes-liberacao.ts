@@ -1,6 +1,16 @@
 // Cloudflare Pages Function
 import { createClient } from '@libsql/client';
 
+const jsonResponse = (data: any, status = 200) => {
+  return new Response(
+    JSON.stringify(data, (_, value) => (typeof value === 'bigint' ? Number(value) : value)),
+    {
+      status,
+      headers: { 'Content-Type': 'application/json' }
+    }
+  );
+};
+
 export async function onRequestPost(context: any) {
   const { request, env } = context;
   
@@ -37,12 +47,9 @@ export async function onRequestPost(context: any) {
     console.log('[Cloudflare] Dados recebidos:', { cooperado_id, hospital_id });
     
     if (!cooperado_id || !hospital_id) {
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         error: 'cooperado_id e hospital_id são obrigatórios' 
-      }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      }, 400);
     }
     
     // Verificar duplicata
@@ -52,12 +59,9 @@ export async function onRequestPost(context: any) {
     });
     
     if (existente.rows.length > 0) {
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         error: 'Já existe uma solicitação pendente para esta unidade' 
-      }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      }, 400);
     }
     
     const dataAtual = new Date().toISOString();
@@ -70,24 +74,18 @@ export async function onRequestPost(context: any) {
     const insertId = result.lastInsertRowid ? Number(result.lastInsertRowid) : null;
     console.log('[Cloudflare] Solicitação criada:', insertId);
     
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
       success: true,
       message: 'Solicitação criada com sucesso',
       id: insertId 
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, 201);
     
   } catch (error: any) {
     console.error('[Cloudflare] Erro:', error);
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
       error: 'Erro ao processar solicitação',
       details: error.message 
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, 500);
   }
 }
 
@@ -132,14 +130,9 @@ export async function onRequestGet(context: any) {
     
     const result = await turso.execute({ sql: query, args: params });
     
-    return new Response(JSON.stringify(result.rows), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return jsonResponse(result.rows);
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return jsonResponse({ error: error.message }, 500);
   }
 }
 
@@ -156,12 +149,9 @@ export async function onRequestPut(context: any) {
     const { id, status, respondido_por, observacao } = body;
     
     if (!id || !status || !respondido_por) {
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
         error: 'id, status e respondido_por são obrigatórios' 
-      }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      }, 400);
     }
     
     // Buscar solicitação
@@ -171,10 +161,7 @@ export async function onRequestPut(context: any) {
     });
     
     if (solicitacao.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Solicitação não encontrada' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return jsonResponse({ error: 'Solicitação não encontrada' }, 404);
     }
     
     const { cooperado_id, hospital_id } = solicitacao.rows[0];
@@ -217,16 +204,11 @@ export async function onRequestPut(context: any) {
       }
     }
     
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
       message: `Solicitação ${status} com sucesso` 
-    }), {
-      headers: { 'Content-Type': 'application/json' }
     });
     
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return jsonResponse({ error: error.message }, 500);
   }
 }
