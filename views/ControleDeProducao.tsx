@@ -106,6 +106,10 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
   const [missingSetores, setMissingSetores] = useState<Setor[]>([]);
   const lastReloadRef = React.useRef(0);
 
+  // Modal de solicitação de liberação
+  const [showModalSolicitacao, setShowModalSolicitacao] = useState(false);
+  const [loadingSolicitacao, setLoadingSolicitacao] = useState(false);
+
   // Dados do cooperado logado (modo cooperado)
   const cooperadoLogadoId = mode === 'cooperado' && session?.type === 'COOPERADO' ? session?.user?.id : null;
   const cooperadoLogadoData = mode === 'cooperado' && session?.type === 'COOPERADO' ? session?.user : null;
@@ -1151,6 +1155,27 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
     setMissingDesc('');
   };
 
+  const solicitarLiberacao = async () => {
+    if (!cooperadoLogadoId || !missingHospitalId) return;
+    
+    setLoadingSolicitacao(true);
+    try {
+      await StorageService.criarSolicitacaoLiberacao({
+        cooperado_id: Number(cooperadoLogadoId),
+        hospital_id: Number(missingHospitalId),
+        observacao: 'Solicitação de liberação para justificativa de plantão'
+      });
+      
+      setShowModalSolicitacao(false);
+      alert('✅ Solicitação enviada com sucesso! Aguarde aprovação da gestão.');
+    } catch (error: any) {
+      console.error('Erro ao solicitar liberação:', error);
+      alert(error.message || 'Erro ao enviar solicitação. Tente novamente.');
+    } finally {
+      setLoadingSolicitacao(false);
+    }
+  };
+
   const submitMissingShift = async () => {
     if (mode !== 'cooperado') return;
     if (!cooperadoLogadoData) return;
@@ -1430,110 +1455,119 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
               </select>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">Setor</label>
-              <select
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
-                value={missingSetorId}
-                onChange={e => setMissingSetorId(e.target.value)}
-                disabled={!missingHospitalId || bloqueadoPorUnidadeNaoAutorizada}
-              >
-                <option value="">Selecione</option>
-                {missingSetores.map(s => (
-                  <option key={s.id} value={s.id}>{s.nome}</option>
-                ))}
-              </select>
-            </div>
+            {!bloqueadoPorUnidadeNaoAutorizada && (
+              <>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Setor</label>
+                  <select
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
+                    value={missingSetorId}
+                    onChange={e => setMissingSetorId(e.target.value)}
+                    disabled={!missingHospitalId}
+                  >
+                    <option value="">Selecione</option>
+                    {missingSetores.map(s => (
+                      <option key={s.id} value={s.id}>{s.nome}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">Data do plantão</label>
-              <input
-                type="date"
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
-                value={missingDate}
-                onChange={e => setMissingDate(e.target.value)}
-                disabled={bloqueadoPorUnidadeNaoAutorizada}
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Data do plantão</label>
+                  <input
+                    type="date"
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
+                    value={missingDate}
+                    onChange={e => setMissingDate(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">Horário de entrada</label>
-              <input
-                type="time"
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
-                value={missingEntrada}
-                onChange={e => setMissingEntrada(e.target.value)}
-                disabled={bloqueadoPorUnidadeNaoAutorizada}
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Horário de entrada</label>
+                  <input
+                    type="time"
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
+                    value={missingEntrada}
+                    onChange={e => setMissingEntrada(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">Horário de saída</label>
-              <input
-                type="time"
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
-                value={missingSaida}
-                onChange={e => setMissingSaida(e.target.value)}
-                disabled={bloqueadoPorUnidadeNaoAutorizada}
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Horário de saída</label>
+                  <input
+                    type="time"
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none"
+                    value={missingSaida}
+                    onChange={e => setMissingSaida(e.target.value)}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500 uppercase">Motivo da falha</label>
-              <select
-                className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                value={missingReason}
-                onChange={e => setMissingReason(e.target.value)}
-                disabled={bloqueadoPorUnidadeNaoAutorizada}
-              >
-                <option value="">-- Selecione um motivo --</option>
-                <option value="Esquecimento">Esquecimento</option>
-                <option value="Computador Inoperante">Computador Inoperante</option>
-                <option value="Falta de Energia">Falta de Energia</option>
-                <option value="Outro Motivo">Outro Motivo</option>
-              </select>
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Motivo da falha</label>
+                  <select
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                    value={missingReason}
+                    onChange={e => setMissingReason(e.target.value)}
+                  >
+                    <option value="">-- Selecione um motivo --</option>
+                    <option value="Esquecimento">Esquecimento</option>
+                    <option value="Computador Inoperante">Computador Inoperante</option>
+                    <option value="Falta de Energia">Falta de Energia</option>
+                    <option value="Outro Motivo">Outro Motivo</option>
+                  </select>
+                </div>
 
-            {missingReason === 'Outro Motivo' && (
-              <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                <label className="text-xs font-bold text-gray-500 uppercase">Descrição detalhada</label>
-                <textarea
-                  className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
-                  rows={3}
-                  placeholder="Descreva o motivo..."
-                  value={missingDesc}
-                  onChange={e => setMissingDesc(e.target.value)}
-                  disabled={bloqueadoPorUnidadeNaoAutorizada}
-                />
-              </div>
+                {missingReason === 'Outro Motivo' && (
+                  <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Descrição detalhada</label>
+                    <textarea
+                      className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                      rows={3}
+                      placeholder="Descreva o motivo..."
+                      value={missingDesc}
+                      onChange={e => setMissingDesc(e.target.value)}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           {bloqueadoPorUnidadeNaoAutorizada && (
-            <div className="mt-3 text-sm text-red-600 font-medium">
-              Unidade não autorizada para justificativa. Selecione uma unidade autorizada para habilitar o preenchimento.
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-sm text-red-700 font-medium mb-3">
+                🔒 Unidade não autorizada para justificativa. Solicite liberação para habilitar o preenchimento.
+              </div>
+              <button
+                onClick={() => setShowModalSolicitacao(true)}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg flex items-center gap-2 font-medium"
+              >
+                <PlusCircle className="h-4 w-4" />
+                Solicitar liberação
+              </button>
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-4">
-            <div className="text-xs text-gray-500">Use este formulário apenas quando não houve registro de entrada e saída.</div>
-            <div className="flex gap-2">
-              <button
-                onClick={resetMissingShiftForm}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                Limpar
-              </button>
-              <button
-                onClick={submitMissingShift}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-400"
-                disabled={bloqueadoPorUnidadeNaoAutorizada}
-              >
-                <PlusCircle className="h-4 w-4" />
-                Incluir
-              </button>
+          {!bloqueadoPorUnidadeNaoAutorizada && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-4">
+              <div className="text-xs text-gray-500">Use este formulário apenas quando não houve registro de entrada e saída.</div>
+              <div className="flex gap-2">
+                <button
+                  onClick={resetMissingShiftForm}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Limpar
+                </button>
+                <button
+                  onClick={submitMissingShift}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center gap-2"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Incluir
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -1839,6 +1873,34 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
       )}
 
         {/* Removido: modal de justificativa de horário */}
+
+        {/* Modal de confirmação de solicitação de liberação */}
+        {showModalSolicitacao && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Solicitar liberação</h3>
+              <p className="text-gray-600 mb-6">
+                Deseja solicitar liberação do formulário de justificativa para esta unidade?
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowModalSolicitacao(false)}
+                  disabled={loadingSolicitacao}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={solicitarLiberacao}
+                  disabled={loadingSolicitacao}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {loadingSolicitacao ? 'Enviando...' : 'Sim'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

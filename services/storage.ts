@@ -300,6 +300,8 @@ export const StorageService = {
         espelho: true,
         autorizacao: true,
         perfil: true,
+        solicitacoesLiberacao: true,
+        setores: true,
       };
       managers.push({
         id: 'manager-seed',
@@ -339,6 +341,9 @@ export const StorageService = {
         autorizacao: false,
         // Perfil deve existir e vir habilitado por padrão para gestores
         perfil: true,
+        solicitacoesLiberacao: false,
+        turnosValores: false,
+        setores: false,
       };
 
       // Preservar preferences locais antes de atualizar
@@ -1223,5 +1228,96 @@ export const StorageService = {
 
   saveTurnosUnidades: (turnos: TurnoUnidade[]) => {
     localStorage.setItem(TURNOS_UNIDADES_KEY, JSON.stringify(turnos));
+  },
+
+  // --- SOLICITAÇÕES DE LIBERAÇÃO ---
+  
+  getSolicitacoesLiberacao: async (filters?: { status?: string; cooperado_id?: string }) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      let url = `${API_BASE_URL}/api/solicitacoes-liberacao`;
+      
+      const params = new URLSearchParams();
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.cooperado_id) params.append('cooperado_id', filters.cooperado_id);
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Erro ao buscar solicitações');
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Erro ao buscar solicitações:', error);
+      return [];
+    }
+  },
+
+  criarSolicitacaoLiberacao: async (data: { 
+    cooperado_id: number; 
+    hospital_id: number; 
+    observacao?: string;
+  }) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${API_BASE_URL}/api/solicitacoes-liberacao`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao criar solicitação');
+      }
+      
+      StorageService.logAudit(
+        'SOLICITACAO_LIBERACAO_CRIADA', 
+        `Solicitação de liberação criada para cooperado ${data.cooperado_id} na unidade ${data.hospital_id}`
+      );
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Erro ao criar solicitação:', error);
+      throw error;
+    }
+  },
+
+  responderSolicitacaoLiberacao: async (data: {
+    id: number;
+    status: 'aprovado' | 'rejeitado';
+    respondido_por: string;
+    observacao?: string;
+  }) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${API_BASE_URL}/api/solicitacoes-liberacao`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao responder solicitação');
+      }
+      
+      StorageService.logAudit(
+        'SOLICITACAO_LIBERACAO_RESPONDIDA', 
+        `Solicitação ${data.id} ${data.status} por ${data.respondido_por}`
+      );
+      
+      // Atualizar cache de cooperados após aprovação
+      if (data.status === 'aprovado') {
+        await StorageService.refreshCooperadosFromRemote();
+      }
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Erro ao responder solicitação:', error);
+      throw error;
+    }
   }
 };

@@ -16,6 +16,7 @@ import { TurnosValores } from './views/TurnosValores';
 
 import { SetoresView } from './views/Setores';
 import { HospitalPermissions } from './types';
+import { SolicitacoesLiberacao } from './views/SolicitacoesLiberacao';
 
 
 export default function App() {
@@ -144,6 +145,7 @@ export default function App() {
       case 'relatorios': return <Relatorios />;
       case 'espelho': return <ControleDeProducao mode="cooperado" />;
       case 'autorizacao': return <AutorizacaoPonto />;
+      case 'solicitacoesLiberacao': return <SolicitacoesLiberacao />;
       case 'cadastro': return <CooperadoRegister />;
       case 'hospitais': return <HospitalRegister />; // Exibe 'Unidades' no menu
       case 'auditoria': return <AuditLogViewer />;

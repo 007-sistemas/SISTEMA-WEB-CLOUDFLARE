@@ -86,6 +86,8 @@ export interface HospitalPermissions {
   espelho: boolean; // Permission for Espelho da Biometria (apenas Cooperados)
   autorizacao: boolean; // New permission for Justification Approval
   perfil: boolean; // New permission for User Profile
+  solicitacoesLiberacao: boolean; // Permission for Liberation Requests Management
+  setores: boolean; // Permissão para gestão de setores
 }
 
 export interface Hospital {
@@ -225,6 +227,22 @@ export interface SdkEventListener {
   onSamplesAcquired?: (event: any) => void;
   onQualityReported?: (event: any) => void;
   onErrorOccurred?: (event: any) => void;
+}
+
+export interface SolicitacaoLiberacao {
+  id: number;
+  cooperado_id: number;
+  hospital_id: number;
+  data_solicitacao: string;
+  status: 'pendente' | 'aprovado' | 'rejeitado';
+  data_resposta?: string;
+  respondido_por?: string;
+  observacao?: string;
+  created_at: string;
+  // Campos JOIN
+  cooperado_nome?: string;
+  cooperado_cpf?: string;
+  hospital_nome?: string;
 }
 
 declare global {
