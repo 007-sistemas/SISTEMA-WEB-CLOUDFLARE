@@ -71,6 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const matricula = body.matricula;
       const status = body.status || 'ATIVO';
       const producaoPorCpf = body.producaoPorCpf === 'Sim' || body.producao_por_cpf === 'Sim' ? 'Sim' : 'Não';
+      const unidadesJustificativa = body.unidadesJustificativa || [];
 
       if (!id || !name) {
         res.status(400).json({ error: "Missing id or name" });
@@ -87,11 +88,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await sql`
         INSERT INTO cooperados (
-          id, name, cpf, email, phone, specialty, matricula, status, producao_por_cpf, updated_at
+          id, name, cpf, email, phone, specialty, matricula, status, producao_por_cpf, unidades_justificativa, updated_at
         )
         VALUES (
           ${id}, ${name}, ${cpf || null}, ${email || null}, ${phone || null},
-          ${specialty || null}, ${matricula || null}, ${status}, ${producaoPorCpf}, CURRENT_TIMESTAMP
+          ${specialty || null}, ${matricula || null}, ${status}, ${producaoPorCpf}, ${JSON.stringify(unidadesJustificativa)}, CURRENT_TIMESTAMP
         )
         ON CONFLICT (id) DO UPDATE SET
           name = ${name},
@@ -102,6 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           matricula = ${matricula || null},
           status = ${status},
           producao_por_cpf = ${producaoPorCpf},
+          unidades_justificativa = ${JSON.stringify(unidadesJustificativa)},
           updated_at = CURRENT_TIMESTAMP
         RETURNING id
       `;
