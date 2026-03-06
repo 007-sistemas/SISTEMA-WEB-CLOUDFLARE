@@ -192,21 +192,43 @@ export const Relatorios: React.FC = () => {
     const entradas = logs.filter(l => l.tipo === 'ENTRADA');
     const saidas = logs.filter(l => l.tipo === 'SAIDA');
     const saidasUsadas = new Set<string>();
+    const MAX_SHIFT_MS = 24 * 60 * 60 * 1000;
+
+    const sameContext = (entrada: RegistroPonto, saida: RegistroPonto) => {
+      return (
+        String(saida.cooperadoId || '') === String(entrada.cooperadoId || '')
+        && String(saida.hospitalId || '') === String(entrada.hospitalId || '')
+        && String(saida.setorId || '') === String(entrada.setorId || '')
+      );
+    };
 
     const encontrarSaida = (entrada: any) => {
       // 1) relatedId da entrada
       if (entrada.relatedId) {
-        const rel = saidas.find(s => s.id === entrada.relatedId && !saidasUsadas.has(s.id));
+        const rel = saidas.find(s => s.id === entrada.relatedId && !saidasUsadas.has(s.id) && sameContext(entrada, s));
         if (rel) return rel;
       }
       // 2) relatedId apontando para entrada
-      const reverse = saidas.find(s => s.relatedId === entrada.id && !saidasUsadas.has(s.id));
+      const reverse = saidas.find(s => s.relatedId === entrada.id && !saidasUsadas.has(s.id) && sameContext(entrada, s));
       if (reverse) return reverse;
       // 3) mesmo codigo
       if (entrada.codigo) {
-        const sameCode = saidas.find(s => s.codigo === entrada.codigo && !saidasUsadas.has(s.id));
+        const sameCode = saidas.find(s => s.codigo === entrada.codigo && !saidasUsadas.has(s.id) && sameContext(entrada, s));
         if (sameCode) return sameCode;
       }
+      // 4) fallback cronológico: primeira saída após a entrada no mesmo contexto
+      const entradaTs = new Date(entrada.timestamp).getTime();
+      const byChronological = saidas
+        .filter(s => {
+          if (saidasUsadas.has(s.id)) return false;
+          if (s.relatedId) return false;
+          if (!sameContext(entrada, s)) return false;
+          const saidaTs = new Date(s.timestamp).getTime();
+          return saidaTs > entradaTs && (saidaTs - entradaTs) <= MAX_SHIFT_MS;
+        })
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0];
+
+      if (byChronological) return byChronological;
       return undefined;
     };
 
