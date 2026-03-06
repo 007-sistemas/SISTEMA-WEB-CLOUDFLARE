@@ -1370,7 +1370,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                     <input 
                         type="text" 
                         className="w-full bg-white text-gray-900 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary-500 pr-8"
-                        placeholder="Todos os Cooperados"
+                        placeholder="Nome ou Matrícula"
                         value={filterCooperadoInput}
                         onChange={e => {
                             setFilterCooperadoInput(e.target.value);
@@ -1394,9 +1394,15 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                     
                     {showFilterCooperadoSuggestions && filterCooperadoInput && !filterCooperado && (
                         <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-b-lg shadow-lg max-h-60 overflow-y-auto mt-1">
-                            {cooperados.filter(c => c.nome.toLowerCase().includes(filterCooperadoInput.toLowerCase())).length > 0 ? (
+                            {cooperados.filter(c => 
+                                c.nome.toLowerCase().includes(filterCooperadoInput.toLowerCase()) || 
+                                (c.matricula && c.matricula.toLowerCase().includes(filterCooperadoInput.toLowerCase()))
+                            ).length > 0 ? (
                                 cooperados
-                                .filter(c => c.nome.toLowerCase().includes(filterCooperadoInput.toLowerCase()))
+                                .filter(c => 
+                                    c.nome.toLowerCase().includes(filterCooperadoInput.toLowerCase()) || 
+                                    (c.matricula && c.matricula.toLowerCase().includes(filterCooperadoInput.toLowerCase()))
+                                )
                                 .map(c => (
                                     <div 
                                         key={c.id} 
@@ -1820,7 +1826,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                     <input 
                         type="text" 
                         className="w-full bg-white text-gray-900 border border-gray-300 rounded p-2 focus:ring-2 focus:ring-primary-500 outline-none"
-                        placeholder="Digite o nome..."
+                        placeholder="Nome ou Matrícula..."
                         value={formCooperadoInput}
                         onChange={e => {
                             setFormCooperadoInput(e.target.value);
@@ -1832,9 +1838,15 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                     />
                     {showCooperadoSuggestions && formCooperadoInput && (
                         <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-b-lg shadow-lg max-h-60 overflow-y-auto mt-1">
-                            {cooperados.filter(c => c.nome.toLowerCase().includes(formCooperadoInput.toLowerCase())).length > 0 ? (
+                            {cooperados.filter(c => 
+                                c.nome.toLowerCase().includes(formCooperadoInput.toLowerCase()) || 
+                                (c.matricula && c.matricula.toLowerCase().includes(formCooperadoInput.toLowerCase()))
+                            ).length > 0 ? (
                                 cooperados
-                                .filter(c => c.nome.toLowerCase().includes(formCooperadoInput.toLowerCase()))
+                                .filter(c => 
+                                    c.nome.toLowerCase().includes(formCooperadoInput.toLowerCase()) || 
+                                    (c.matricula && c.matricula.toLowerCase().includes(formCooperadoInput.toLowerCase()))
+                                )
                                 .map(c => (
                                     <div 
                                         key={c.id} 
