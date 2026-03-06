@@ -189,6 +189,26 @@ export const CooperadoRegister: React.FC = () => {
     setDuplicateType(null);
   };
 
+  const handleNovoCooperado = () => {
+    // Calcular próxima matrícula sugerida
+    const todasMatriculas = cooperados
+      .map(c => parseInt(c.matricula || '0'))
+      .filter(m => !isNaN(m) && m > 0);
+    
+    const maiorMatricula = todasMatriculas.length > 0 
+      ? Math.max(...todasMatriculas) 
+      : 0;
+    
+    const proximaMatricula = (maiorMatricula + 1).toString();
+    
+    // Preencher formData com próxima matrícula sugerida
+    setFormData({
+      ...initialFormState,
+      matricula: proximaMatricula
+    });
+    setIsFormOpen(true);
+  };
+
   const handleEdit = (c: Cooperado) => {
     setFormData({
       ...c,
@@ -367,7 +387,7 @@ export const CooperadoRegister: React.FC = () => {
             <span>Exportar Planilha</span>
           </button>
           <button
-            onClick={() => { setFormData(initialFormState); setIsFormOpen(true); }}
+            onClick={handleNovoCooperado}
             className="flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="h-4 w-4" />
