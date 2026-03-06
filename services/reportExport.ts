@@ -73,12 +73,17 @@ export const exportToExcel = async (
       { header: 'Status', key: 'status', width: 14 }
     ];
 
-    // Estilizar cabeçalho
+    // Estilizar cabeçalho (apenas até a coluna I)
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
     headerRow.height = 20;
+    
+    // Aplicar cor apenas até a coluna I (9 colunas)
+    for (let i = 1; i <= 9; i++) {
+      const cell = headerRow.getCell(i);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
+    }
 
     // Adicionar dados
     data.forEach((row) => {
@@ -103,27 +108,6 @@ export const exportToExcel = async (
         newRow.getCell('status').font = { color: { argb: 'FFF57C00' } };
       }
     });
-
-    // Adicionar linha em branco
-    worksheet.addRow({});
-
-    // Adicionar linha de resumo
-    const resumoRow = worksheet.addRow({
-      cooperadoNome: 'RESUMO DO PERÍODO',
-      totalHoras: stats.totalHoras
-    });
-
-    resumoRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    resumoRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
-    resumoRow.eachCell((cell) => {
-      cell.alignment = { horizontal: 'left', vertical: 'middle' };
-    });
-
-    // Adicionar filtros aplicados como informação no topo (em células vazias antes dos dados)
-    const filterText = buildFilterText(filters);
-    const filterRow = worksheet.insertRow(1, [filterText]);
-    filterRow.font = { italic: true, color: { argb: 'FF666666' } };
-    filterRow.alignment = { horizontal: 'left' };
 
     // Gerar arquivo
     const buffer = await workbook.xlsx.writeBuffer();
@@ -420,17 +404,17 @@ export const exportToExcelByCooperado = async (
         { header: 'Status', key: 'status', width: 14 }
       ];
 
-      // Estilizar cabeçalho
+      // Estilizar cabeçalho (apenas até a coluna H)
       const headerRow = worksheet.getRow(1);
       headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
       headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
       headerRow.height = 20;
-
-      // Adicionar informações do cooperado no topo
-      const infoRow = worksheet.insertRow(1, [`Cooperado: ${cooperadoNome} | Categoria Profissional: ${cooperadoData[0]?.categoriaProfissional}`]);
-      infoRow.font = { bold: true, color: { argb: 'FF333333' } };
-      infoRow.alignment = { horizontal: 'left' };
+      
+      // Aplicar cor apenas até a coluna H (8 colunas)
+      for (let i = 1; i <= 8; i++) {
+        const cell = headerRow.getCell(i);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
+      }
 
       // Adicionar dados
       cooperadoData.forEach((row) => {
@@ -463,27 +447,6 @@ export const exportToExcelByCooperado = async (
         } else {
           newRow.getCell('status').font = { color: { argb: 'FFF57C00' } };
         }
-      });
-
-      // Adicionar linha em branco e resumo
-      worksheet.addRow({});
-
-      // Calcular total de horas para este cooperado
-      const totalHoras = cooperadoData.reduce((acc, r) => {
-        if (r.totalHoras === '--') return acc;
-        const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
-        return acc + hours + (minutes / 60);
-      }, 0);
-
-      const resumoRow = worksheet.addRow({
-        categoriaProfissional: 'RESUMO DO COOPERADO',
-        totalHoras: `${totalHoras.toFixed(1)}h`
-      });
-
-      resumoRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      resumoRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
-      resumoRow.eachCell((cell) => {
-        cell.alignment = { horizontal: 'left', vertical: 'middle' };
       });
     });
 
