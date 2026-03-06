@@ -651,12 +651,12 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
         setShowFilterCooperadoSuggestions(false);
         setSelectedFilterCooperadoIndex(null);
       }
-    } else if (e.key === 'ArrowDown' || e.key === 'Tab') {
+    } else if ((e.key === 'ArrowDown' || e.key === 'Tab') && showFilterCooperadoSuggestions && filterCooperadoInput && filtrados.length > 0) {
       e.preventDefault();
       setShowFilterCooperadoSuggestions(true);
       const nextIndex = selectedFilterCooperadoIndex === null ? 0 : Math.min(selectedFilterCooperadoIndex + 1, filtrados.length - 1);
       setSelectedFilterCooperadoIndex(nextIndex);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && showFilterCooperadoSuggestions && filterCooperadoInput && filtrados.length > 0) {
       e.preventDefault();
       const prevIndex = selectedFilterCooperadoIndex === null ? filtrados.length - 1 : Math.max(selectedFilterCooperadoIndex - 1, 0);
       setSelectedFilterCooperadoIndex(prevIndex);
@@ -691,12 +691,12 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
         setShowCooperadoSuggestions(false);
         setSelectedFormCooperadoIndex(null);
       }
-    } else if (e.key === 'ArrowDown' || e.key === 'Tab') {
+    } else if ((e.key === 'ArrowDown' || e.key === 'Tab') && showCooperadoSuggestions && formCooperadoInput && filtrados.length > 0) {
       e.preventDefault();
       setShowCooperadoSuggestions(true);
       const nextIndex = selectedFormCooperadoIndex === null ? 0 : Math.min(selectedFormCooperadoIndex + 1, filtrados.length - 1);
       setSelectedFormCooperadoIndex(nextIndex);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && showCooperadoSuggestions && formCooperadoInput && filtrados.length > 0) {
       e.preventDefault();
       const prevIndex = selectedFormCooperadoIndex === null ? filtrados.length - 1 : Math.max(selectedFormCooperadoIndex - 1, 0);
       setSelectedFormCooperadoIndex(prevIndex);
