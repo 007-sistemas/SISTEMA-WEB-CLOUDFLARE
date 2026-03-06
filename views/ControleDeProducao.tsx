@@ -114,8 +114,10 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
   const cooperadoLogadoId = mode === 'cooperado' && session?.type === 'COOPERADO' ? session?.user?.id : null;
   const cooperadoLogadoData = mode === 'cooperado' && session?.type === 'COOPERADO' ? session?.user : null;
   const cooperadoEfetivo = mode === 'cooperado' ? resolveCooperado(session?.user, cooperados) : null;
-  const unidadesAutorizadasJustificativa = (cooperadoEfetivo?.unidadesJustificativa || []).map(id => String(id));
-  const possuiRestricaoPorUnidade = mode === 'cooperado' && unidadesAutorizadasJustificativa.length > 0;
+  const unidadesJustificativaConfiguradas = mode === 'cooperado' && Array.isArray(cooperadoEfetivo?.unidadesJustificativa);
+  const unidadesAutorizadasJustificativa = ((cooperadoEfetivo?.unidadesJustificativa || []) as Array<string | number>).map(id => String(id));
+  // Regra: se o cooperado tem lista configurada (mesmo vazia), só pode justificar unidades dessa lista.
+  const possuiRestricaoPorUnidade = unidadesJustificativaConfiguradas;
   const unidadeSelecionadaAutorizada = !missingHospitalId || !possuiRestricaoPorUnidade || unidadesAutorizadasJustificativa.includes(String(missingHospitalId));
   const bloqueadoPorUnidadeNaoAutorizada = !!missingHospitalId && possuiRestricaoPorUnidade && !unidadeSelecionadaAutorizada;
 
@@ -1222,16 +1224,18 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
     }
 
     // ===== VALIDAÇÃO: UNIDADE AUTORIZADA PARA JUSTIFICATIVA =====
-    if (cooperadoEfetivo?.unidadesJustificativa && 
-        cooperadoEfetivo.unidadesJustificativa.length > 0) {
+    if (mode === 'cooperado' && Array.isArray(cooperadoEfetivo?.unidadesJustificativa)) {
+      const unidadesAutorizadas = cooperadoEfetivo.unidadesJustificativa.map(id => String(id));
       const hospitalIdAsString = String(missingHospitalId);
-      const isAuthorized = cooperadoEfetivo.unidadesJustificativa.includes(hospitalIdAsString);
+      const isAuthorized = unidadesAutorizadas.includes(hospitalIdAsString);
       
       if (!isAuthorized) {
         const hospitalName = hospitais.find(h => String(h.id) === hospitalIdAsString)?.nome || 'Unidade desconhecida';
-        const authorizedNames = cooperadoEfetivo.unidadesJustificativa
-          .map(id => hospitais.find(h => String(h.id) === id)?.nome || `ID: ${id}`)
-          .join('\n• ');
+        const authorizedNames = unidadesAutorizadas.length > 0
+          ? unidadesAutorizadas
+              .map(id => hospitais.find(h => String(h.id) === String(id))?.nome || `ID: ${id}`)
+              .join('\n• ')
+          : 'Nenhuma. Solicite liberação para a unidade desejada.';
         console.warn('[submitMissingShift] ❌ Unidade não autorizada:', hospitalName, 'unidades autorizadas:', cooperadoEfetivo.unidadesJustificativa);
         alert(`❌ Você não tem permissão para preencher justificativas na unidade "${hospitalName}".\n\nUnidades autorizadas:\n• ${authorizedNames}`);
         return;
