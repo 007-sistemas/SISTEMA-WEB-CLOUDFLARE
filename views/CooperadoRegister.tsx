@@ -613,39 +613,6 @@ export const CooperadoRegister: React.FC = () => {
           </div>
           
           <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Unidades para Justificativa de Plantão */}
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 block mb-1">Unidades para autorizar justificativas</label>
-              <div className="flex flex-wrap gap-2">
-                {StorageService.getHospitais().map(h => (
-                  <button
-                    type="button"
-                    key={h.id}
-                    className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors flex items-center gap-1
-                      ${formData.unidadesJustificativa?.includes(h.id)
-                        ? 'bg-primary-600 text-white border-primary-700 shadow'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                    onClick={() => {
-                      const atual = formData.unidadesJustificativa || [];
-                      setFormData({
-                        ...formData,
-                        unidadesJustificativa: atual.includes(h.id)
-                          ? atual.filter(uid => uid !== h.id)
-                          : [...atual, h.id]
-                      });
-                    }}
-                  >
-                    {formData.unidadesJustificativa?.includes(h.id) ? (
-                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                    ) : (
-                      <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
-                    )}
-                    {h.nome}
-                  </button>
-                ))}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">Selecione as unidades em que o cooperado poderá justificar plantão.</div>
-            </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">Nome Completo</label>
               <input 
@@ -764,6 +731,64 @@ export const CooperadoRegister: React.FC = () => {
                 }`}>
                   {formData.producaoPorCpf === 'Sim' ? 'Sim' : 'Não'}
                 </span>
+              </div>
+            </div>
+
+            {/* Unidades para Justificativa de Plantão (movido para o final) */}
+            <div className="md:col-span-2 rounded-xl border border-primary-100 bg-primary-50/40 p-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block">Unidades para autorizar justificativas</label>
+                  <div className="text-xs text-gray-500 mt-1">Selecione as unidades em que o cooperado poderá justificar plantão.</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const allHospitalIds = StorageService.getHospitais().map(h => h.id);
+                      setFormData({ ...formData, unidadesJustificativa: allHospitalIds });
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-primary-300 bg-white text-primary-700 text-xs font-semibold hover:bg-primary-50 transition-colors"
+                  >
+                    Marcar todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, unidadesJustificativa: [] })}
+                    className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors"
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {StorageService.getHospitais().map(h => (
+                  <button
+                    type="button"
+                    key={h.id}
+                    className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors flex items-center gap-1
+                      ${formData.unidadesJustificativa?.includes(h.id)
+                        ? 'bg-primary-600 text-white border-primary-700 shadow'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                    onClick={() => {
+                      const atual = formData.unidadesJustificativa || [];
+                      setFormData({
+                        ...formData,
+                        unidadesJustificativa: atual.includes(h.id)
+                          ? atual.filter(uid => uid !== h.id)
+                          : [...atual, h.id]
+                      });
+                    }}
+                  >
+                    {formData.unidadesJustificativa?.includes(h.id) ? (
+                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                    ) : (
+                      <span className="inline-block w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
+                    )}
+                    {h.nome}
+                  </button>
+                ))}
               </div>
             </div>
 
