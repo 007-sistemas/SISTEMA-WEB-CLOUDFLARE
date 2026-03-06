@@ -795,7 +795,7 @@ export const StorageService = {
       ];
 
 
-      // Removido: liberação automática ao sincronizar produção. Liberação só ocorre em savePonto/updatePonto.
+      // Liberação automática removida: só ocorre em savePonto/updatePonto, nunca em sincronização/importação.
 
       localStorage.setItem(PONTOS_KEY, JSON.stringify(merged));
     } catch (err) {
