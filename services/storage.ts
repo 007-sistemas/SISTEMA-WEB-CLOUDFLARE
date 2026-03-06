@@ -794,17 +794,8 @@ export const StorageService = {
         ...localManualFiltrado.filter(l => !mapped.some(r => r.id === l.id))
       ];
 
-      // Liberação automática de unidade para justificativa ao detectar produção remota.
-      const paresLiberacao = new Set<string>();
-      merged.forEach((p) => {
-        if (!p.cooperadoId || !p.hospitalId) return;
-        paresLiberacao.add(`${String(p.cooperadoId)}::${String(p.hospitalId)}`);
-      });
 
-      paresLiberacao.forEach((par) => {
-        const [cId, hId] = par.split('::');
-        StorageService.liberarUnidadeJustificativaPorProducao(cId, hId);
-      });
+      // Removido: liberação automática ao sincronizar produção. Liberação só ocorre em savePonto/updatePonto.
 
       localStorage.setItem(PONTOS_KEY, JSON.stringify(merged));
     } catch (err) {
