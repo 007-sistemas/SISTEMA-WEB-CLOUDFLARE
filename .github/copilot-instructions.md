@@ -1,192 +1,135 @@
-# Idev - Instruções para Agentes de IA
+﻿# Idev - Instrucoes para Agentes de IA
 
-## Visão Geral
+## Visao Geral
 
-**Idev** é um sistema web de gestão biométrica e controle de ponto para cooperativas médicas/hospitalares. Construído em **React 19 + TypeScript + Vite**, com backend em **Vercel Functions** e banco de dados **Turso (libSQL)**.
+**Idev** e um sistema web de controle de producao e ponto para cooperativas medicas/hospitalares.
+
+Stack atual:
+- Frontend: **React 19 + TypeScript + Vite**
+- Backend HTTP: **Cloudflare Pages Functions**
+- Banco: **Turso (libSQL)**
+- Persistencia local de apoio: **localStorage**
+- Biometria: **fluxo desktop externo** (nao ha mais captura biometrica web ativa)
 
 ## Arquitetura
 
-### Stack Tecnológico
-- **Frontend**: React 19, TypeScript, Vite, Lucide Icons, Recharts (gráficos)
-- **Backend**: Vercel Serverless Functions (Node.js) em `api/`
-- **Banco de Dados**: Turso (libSQL) via @libsql/client
-- **Storage Cliente**: localStorage (seed data e sessão)
-- **Biometria**: DigitalPersona SDK (JavaScript, carregado em `public/js/`)
-
-### Estrutura de Pastas
+### Estrutura de Pastas (resumo)
 ```
-api/           → Vercel Functions (setup, cooperados, biometrics)
-components/    → Componentes React reutilizáveis (Layout, BiometricCapture, ScannerMock)
-services/      → Lógica de negócio (api.ts, storage.ts, biometry.ts)
-views/         → Páginas completas (Dashboard, BiometriaManager, Login, etc)
-public/js/     → SDKs de biometria (DigitalPersona, WebSDK)
+api/           -> handlers HTTP e regras server-side
+components/    -> componentes React reutilizaveis (layout e UI)
+services/      -> logica de negocio (api, storage, normalizacao, exportacao)
+views/         -> telas principais do sistema
+public/        -> assets estaticos (favicon, templates, _redirects)
 ```
 
-## Padrões Principais
+### Observacoes importantes de arquitetura
+- A pasta `functions/` pode conter adaptadores de runtime e deve ser preservada se estiver no fluxo de deploy do Cloudflare.
+- O sistema **nao depende** mais dos SDKs web do DigitalPersona (`es6-shim.js`, `websdk.client.bundle.min.js`, `fingerprint.sdk.min.js`).
+- Trechos legados de biometria web foram removidos para evitar ruido de build/deploy.
 
-### 1. Autenticação & Permissões
-- Duas roles de acesso: **Managers** (administradores) e **Hospitals** (instituições)
-- Permissões baseadas em `HospitalPermissions` (interface em `types.ts`)
-- Fluxo: Login → `StorageService.authenticate()` → Sessão armazenada → Acesso by role
-- Usuário padrão: `gabriel/gabriel` com todas as permissões
+## Padroes Principais
 
-**Exemplo de uso:**
-```tsx
-// App.tsx: Valida permissão antes de renderizar view
-if (!userPermissions[currentView as keyof HospitalPermissions]) {
-  return <div>Acesso não autorizado.</div>;
-}
-```
+### 1. Autenticacao e permissoes
+- Roles principais: gestores e usuarios de unidades.
+- Permissoes centralizadas em `HospitalPermissions` em `types.ts`.
+- Fluxo: login -> sessao em storage -> renderizacao condicionada por permissao.
 
-### 2. StorageService - Camada de Dados
-Localizado em `services/storage.ts` (448 linhas), gerencia tudo via localStorage:
-- `getCooperados()`, `saveCooperado()` - Cooperados/equipe médica
-- `getPontos()`, `savePonto()` - Registros de ponto/produção
-- `logAudit()` - Rastreamento de ações
-- `authenticate()` - Validação de credenciais
-- `getSession()`, `setSession()`, `clearSession()` - Gerenciamento de sessão
+### 2. Camada de dados (StorageService)
+Arquivo: `services/storage.ts`
 
-**Importante**: Há dois níveis de dados:
-1. **localStorage** (dev/fallback): dados de seed + histórico local
-2. **Turso (libSQL)** (produção): tabelas persistidas via `api/setup`
+Responsabilidades comuns:
+- sessao e autenticacao local
+- cache local de entidades
+- logs de auditoria
+- sincronizacao defensiva com API quando aplicavel
 
-### 3. Serviço de Biometria
-`services/biometry.ts` encapsula o DigitalPersona SDK:
-- `enumerateDevices()` - Detecta leitores de digitais conectados
-- `startAcquisition()` - Inicia captura de impressão
-- `stopAcquisition()` - Encerra captura
-- Suporta **ScannerMock** para testes sem hardware
-- SDK carregado globalmente como `window.Fingerprint`
+### 3. API client
+Arquivo: `services/api.ts`
 
-### 4. API Client Pattern
-`services/api.ts` - Funções genéricas tipadas:
-```typescript
+Padrao:
+```ts
 apiGet<T>(path: string): Promise<T>
-apiPost<T>(path: string, body: any): Promise<T>
-// Uso: const users = await apiGet<User[]>('cooperados')
+apiPost<T>(path: string, body: unknown): Promise<T>
 ```
 
-## Fluxos de Negócio Críticos
+## Fluxos de Negocio Criticos
 
-### Registro de Ponto/Biometria
-1. Usuário seleciona cooperado em `BiometriaManager`
-2. Captura impressão via `DigitalPersonaService.startAcquisition()`
-3. `handleScanSuccess()` cria `Biometria` com hash da digital
-4. `StorageService.saveCooperado()` persiste + `logAudit()` registra ação
-5. Localmente sincronizado; em produção vai para `POST /api/biometrics`
+### Registro e controle de producao
+- entradas e saidas sao processadas pelo fluxo atual de tela e backend
+- justificativas, aprovacoes e espelho usam os dados persistidos no Turso e/ou cache local
 
-### Dashboard & Relatórios
-- Renderiza dados de `StorageService.getPontos()` e `getCooperados()`
-- Usa **Recharts** para gráficos (veja `Dashboard.tsx`)
-- Filtros por período, especialidade, status cooperado
+### Dashboard e relatorios
+- usam agregacoes sobre dados de cooperados, pontos e justificativas
+- graficos com Recharts
 
-### Views Principais
-| View | Arquivo | Função |
+## Views Principais (estado atual)
+
+| View | Arquivo | Funcao |
 |------|---------|--------|
-| Dashboard | `views/Dashboard.tsx` | Resumo de produção, gráficos |
-| Registro de Ponto | `views/PontoMachine.tsx` | Captura biométrica + ponto |
-| Biometria | `views/BiometriaManager.tsx` | Gestão de digitais por cooperado |
-| Cooperados | `views/CooperadoRegister.tsx` | CRUD de equipe médica |
-| Auditoria | `views/AuditLogViewer.tsx` | Logs de ações do sistema |
-| Relatórios | `views/RelatorioProducao.tsx` | Produção por período |
+| Dashboard | `views/Dashboard.tsx` | Visao consolidada |
+| Controle de Producao | `views/ControleDeProducao.tsx` | Operacao e acompanhamento |
+| Relatorios | `views/Relatorios.tsx` | Filtros e exportacoes |
+| Cooperados | `views/CooperadoRegister.tsx` | Cadastro e manutencao |
+| Unidades | `views/HospitalRegister.tsx` | Cadastro de unidades |
+| Setores | `views/Setores.tsx` | Gestao de setores |
+| Solicitacoes | `views/SolicitacoesLiberacao.tsx` | Fluxo de liberacao |
+| Turnos e Valores | `views/TurnosValores.tsx` | Regras de turno/valor |
+| Perfil | `views/UserProfile.tsx` | Preferencias do usuario |
+| Auditoria | `views/AuditLogViewer.tsx` | Historico de acoes |
 
 ## Tarefas Comuns
 
-### Adicionar Nova View
-1. Criar arquivo em `views/MeuModulo.tsx` como componente React
-2. Adicionar case em `App.tsx` switch statement
-3. Importar em `App.tsx` 
-4. Adicionar item em `Layout.tsx` → `allNavItems` com ícone + permissionKey
-5. Adicionar interface de permissão em `types.ts` → `HospitalPermissions`
+### Adicionar nova view
+1. Criar arquivo em `views/`.
+2. Registrar no switch de renderizacao em `App.tsx`.
+3. Adicionar item de navegacao em `components/Layout.tsx` com `permissionKey`.
+4. Incluir/ajustar permissao correspondente em `types.ts`.
 
-### Integrar Dados com Turso
-1. Criar função handler em `api/novo-endpoint.ts`
-2. Usar `@libsql/client` para queries SQL
-3. Consumir via `apiPost<T>('/novo-endpoint', data)`
-4. Considerar cache local com `StorageService` para offline
+### Adicionar endpoint
+1. Criar handler em `api/novo-endpoint.ts`.
+2. Usar Turso via `@libsql/client` quando necessario.
+3. Consumir via `services/api.ts` no frontend.
 
-### Adicionar Auditoria
-```typescript
-StorageService.logAudit('TIPO_ACAO', `Descrição da ação`);
-// Exemplos: 'CADASTRO_BIOMETRIA', 'LOGIN_SUCESSO', 'ALTERACAO_COOPERADO'
+### Adicionar auditoria
+```ts
+StorageService.logAudit('TIPO_ACAO', 'Descricao da acao');
 ```
 
-## Configuração & Build
+## Configuracao e Build
 
-### Desenvolvimento Local
+### Desenvolvimento local
 ```bash
 npm install
-npm run dev      # Inicia Vite em http://localhost:5173
+npm run dev
 ```
 
-### Build & Deploy
+### Build
 ```bash
-npm run build    # Gera dist/ otimizado
-npm run preview  # Testa build localmente
-# Deploy: Git push para Vercel (conectado automaticamente)
+npm run build
+npm run preview
 ```
 
-### Variáveis de Ambiente
-- `DATABASE_URL` - Turso database URL (Vercel Project Settings)
-- `DATABASE_AUTH_TOKEN` - Turso auth token
-- `GEMINI_API_KEY` - Para integração com IA (opcional, não usado atualmente)
+### Variaveis de ambiente
+- `DATABASE_URL` - URL do Turso
+- `DATABASE_AUTH_TOKEN` - token do Turso
 
-### Inicializar Banco de Dados
-```bash
-# Em produção (Vercel)
-POST https://<seu-deploy>/api/setup
+## Pontos de Atencao
 
-# Localmente com Vercel CLI
-vercel dev
-curl -X POST http://localhost:3000/api/setup
-```
+1. **Cloudflare + Turso**: manter handlers e client alinhados com o ambiente atual.
+2. **Permissoes**: sempre validar permissao antes de renderizar recursos sensiveis.
+3. **TypeScript**: manter tipagem explicita e interfaces em `types.ts`.
+4. **Consistencia UI**: manter padroes de layout e cores existentes.
 
-## Pontos de Atenção
+## Convencoes de Codigo
 
-1. **SDK Biometria Lazy-Loading**: O DigitalPersona é carregado em `public/html` e verificado em `App.tsx` via polling. Em ambiente de teste, use `ScannerMock` ou `BiometricCapture` para debug.
-
-2. **localStorage vs Turso**: Atualmente a maioria dos dados vive em localStorage (seed data). Em produção, migrar lógica para Turso conforme necessário.
-
-3. **TypeScript Strict**: Projeto usa ES2022 com `jsx: "react-jsx"`. Sempre tipar componentes e funções.
-
-4. **Tailwind + Lucide**: UI usa Tailwind CSS (não visto em imports, assume global) e Lucide para ícones. Mantenha consistência visual com cores `primary-*`.
-
-5. **Permissões Granulares**: Sempre verificar `userPermissions` antes de renderizar features sensíveis. Não confie apenas em validação UI.
-
-## Exemplos Úteis
-
-### Query de Cooperados
-```typescript
-// Local
-const cooperados = StorageService.getCooperados();
-
-// API (produção)
-const cooperados = await apiGet<Cooperado[]>('cooperados');
-```
-
-### Atualizar Cooperado com Biometria
-```typescript
-const updated = { ...cooperado, biometrias: [...cooperado.biometrias, novaBio] };
-StorageService.saveCooperado(updated);
-StorageService.logAudit('CADASTRO_BIOMETRIA', `Bio adicionada para ${updated.nome}`);
-```
-
-### Renderizar Condicionalmente por Permissão
-```tsx
-{permissions?.biometria && <BiometriaManager />}
-{permissions?.relatorio && <RelatorioProducao />}
-```
-
-## Convenções de Código
-
-- **Nomes em Português**: Variáveis, funções, comentários em português (usuários são brasileiros)
-- **Types.ts**: Fonte única de verdade para interfaces
-- **Services**: Lógica pura (sem JSX), reutilizável
-- **Views vs Components**: Views = páginas completas; Components = reutilizáveis
-- **Exports**: Use `export const` para componentes/funções, não default exports quando possível
+- Nomes em portugues quando fizer sentido de negocio.
+- `types.ts` como fonte de verdade para contratos compartilhados.
+- `services/` para logica sem JSX.
+- `views/` para paginas completas.
+- Preferir `export const`.
 
 ---
 
-**Última atualização**: Dezembro 2025  
-**Contato**: Gabriel Gomes  
-**Repositório**: GitHub/Sistema-Web
+**Ultima atualizacao**: Marco 2026
+**Contato**: Gabriel Gomes
+**Repositorio**: GitHub/Sistema-Web
