@@ -1592,10 +1592,12 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                 onChange={e => { setMissingHospitalId(e.target.value); setMissingSetorId(''); }}
               >
                 <option value="">Selecione</option>
-                {hospitais.map(h => (
+                {(possuiRestricaoPorUnidade
+                  ? hospitais.filter(h => unidadesAutorizadasJustificativa.includes(String(h.id)))
+                  : hospitais
+                ).map(h => (
                   <option key={h.id} value={h.id}>
                     {h.nome}
-                    {possuiRestricaoPorUnidade && !unidadesAutorizadasJustificativa.includes(String(h.id)) ? ' 🔒' : ''}
                   </option>
                 ))}
               </select>
