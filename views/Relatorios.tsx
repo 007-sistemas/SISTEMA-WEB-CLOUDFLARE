@@ -35,6 +35,13 @@ export const Relatorios: React.FC = () => {
             const cooperado = cooperados.find(c => c.id === filterCooperado);
             filterLabels.cooperado = cooperado?.nome || filterCooperado;
           }
+          // Adicionar datas ao filtro
+          if (filterDataIni) {
+            filterLabels.dataIni = filterDataIni;
+          }
+          if (filterDataFim) {
+            filterLabels.dataFim = filterDataFim;
+          }
           const stats = {
             totalRegistros: relatorioData.length,
             plantoesFechados: relatorioData.filter(r => r.status === 'Fechado').length,
