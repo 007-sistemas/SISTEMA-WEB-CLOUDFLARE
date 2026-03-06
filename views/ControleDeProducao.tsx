@@ -67,6 +67,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
   const [filterCooperado, setFilterCooperado] = useState(''); // Stores ID
   const [filterCooperadoInput, setFilterCooperadoInput] = useState(''); // Stores Display Text
   const [showFilterCooperadoSuggestions, setShowFilterCooperadoSuggestions] = useState(false);
+  const [selectedFilterCooperadoIndex, setSelectedFilterCooperadoIndex] = useState<number | null>(null);
 
   // Exibir/ocultar recusadas
   const [showRecusadas, setShowRecusadas] = useState(false);
@@ -87,6 +88,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
   const [formCooperadoId, setFormCooperadoId] = useState('');
   const [formCooperadoInput, setFormCooperadoInput] = useState(''); // Text input for autocomplete
   const [showCooperadoSuggestions, setShowCooperadoSuggestions] = useState(false);
+  const [selectedFormCooperadoIndex, setSelectedFormCooperadoIndex] = useState<number | null>(null);
 
   const [formSetorId, setFormSetorId] = useState('');
   const [formData, setFormData] = useState(''); // Date string YYYY-MM-DD
@@ -604,6 +606,104 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
     });
 
     return resultados;
+  };
+
+  // Função auxiliar: filtrar cooperados por nome/matrícula
+  const getFilteredCooperados = (input: string): Cooperado[] => {
+    return cooperados.filter(c => 
+      c.nome.toLowerCase().includes(input.toLowerCase()) || 
+      (c.matricula && String(c.matricula).toLowerCase().includes(input.toLowerCase()))
+    );
+  };
+
+  // Função auxiliar: detectar se é matrícula (apenas números)
+  const isMatriculaInput = (input: string): boolean => {
+    return /^\d+$/.test(input.trim());
+  };
+
+  // Função auxiliar: buscar cooperado por matrícula exata
+  const findByMatricula = (matricula: string): Cooperado | undefined => {
+    return cooperados.find(c => String(c.matricula) === matricula);
+  };
+
+  // Handler para teclado no filtro de cooperado
+  const handleFilterCooperadoKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const filtrados = getFilteredCooperados(filterCooperadoInput);
+    
+    if (e.key === 'Enter') {
+      // Se é busca por matrícula, tenta busca exata
+      if (isMatriculaInput(filterCooperadoInput)) {
+        const found = findByMatricula(filterCooperadoInput.trim());
+        if (found) {
+          setFilterCooperado(found.id);
+          setFilterCooperadoInput(found.nome);
+          setShowFilterCooperadoSuggestions(false);
+          setSelectedFilterCooperadoIndex(null);
+        }
+        return;
+      }
+      
+      // Se há sugestão selecionada, seleciona
+      if (selectedFilterCooperadoIndex !== null && filtrados[selectedFilterCooperadoIndex]) {
+        const selected = filtrados[selectedFilterCooperadoIndex];
+        setFilterCooperado(selected.id);
+        setFilterCooperadoInput(selected.nome);
+        setShowFilterCooperadoSuggestions(false);
+        setSelectedFilterCooperadoIndex(null);
+      }
+    } else if (e.key === 'ArrowDown' || e.key === 'Tab') {
+      e.preventDefault();
+      setShowFilterCooperadoSuggestions(true);
+      const nextIndex = selectedFilterCooperadoIndex === null ? 0 : Math.min(selectedFilterCooperadoIndex + 1, filtrados.length - 1);
+      setSelectedFilterCooperadoIndex(nextIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = selectedFilterCooperadoIndex === null ? filtrados.length - 1 : Math.max(selectedFilterCooperadoIndex - 1, 0);
+      setSelectedFilterCooperadoIndex(prevIndex);
+    } else if (e.key === 'Escape') {
+      setShowFilterCooperadoSuggestions(false);
+      setSelectedFilterCooperadoIndex(null);
+    }
+  };
+
+  // Handler para teclado no formulário de cooperado
+  const handleFormCooperadoKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const filtrados = getFilteredCooperados(formCooperadoInput);
+    
+    if (e.key === 'Enter') {
+      // Se é busca por matrícula, tenta busca exata
+      if (isMatriculaInput(formCooperadoInput)) {
+        const found = findByMatricula(formCooperadoInput.trim());
+        if (found) {
+          setFormCooperadoId(found.id);
+          setFormCooperadoInput(found.nome);
+          setShowCooperadoSuggestions(false);
+          setSelectedFormCooperadoIndex(null);
+        }
+        return;
+      }
+      
+      // Se há sugestão selecionada, seleciona
+      if (selectedFormCooperadoIndex !== null && filtrados[selectedFormCooperadoIndex]) {
+        const selected = filtrados[selectedFormCooperadoIndex];
+        setFormCooperadoId(selected.id);
+        setFormCooperadoInput(selected.nome);
+        setShowCooperadoSuggestions(false);
+        setSelectedFormCooperadoIndex(null);
+      }
+    } else if (e.key === 'ArrowDown' || e.key === 'Tab') {
+      e.preventDefault();
+      setShowCooperadoSuggestions(true);
+      const nextIndex = selectedFormCooperadoIndex === null ? 0 : Math.min(selectedFormCooperadoIndex + 1, filtrados.length - 1);
+      setSelectedFormCooperadoIndex(nextIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = selectedFormCooperadoIndex === null ? filtrados.length - 1 : Math.max(selectedFormCooperadoIndex - 1, 0);
+      setSelectedFormCooperadoIndex(prevIndex);
+    } else if (e.key === 'Escape') {
+      setShowCooperadoSuggestions(false);
+      setSelectedFormCooperadoIndex(null);
+    }
   };
 
   // --- FILTER LOGIC ---
@@ -1376,7 +1476,9 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                             setFilterCooperadoInput(e.target.value);
                             setFilterCooperado(''); 
                             setShowFilterCooperadoSuggestions(true);
+                            setSelectedFilterCooperadoIndex(null);
                         }}
+                        onKeyDown={handleFilterCooperadoKeyDown}
                         onFocus={() => setShowFilterCooperadoSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowFilterCooperadoSuggestions(false), 200)}
                     />
@@ -1385,6 +1487,7 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                             onClick={() => {
                                 setFilterCooperado('');
                                 setFilterCooperadoInput('');
+                                setSelectedFilterCooperadoIndex(null);
                             }}
                             className="absolute right-2 top-2 text-gray-400 hover:text-red-500"
                         >
@@ -1394,32 +1497,32 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                     
                     {showFilterCooperadoSuggestions && filterCooperadoInput && !filterCooperado && (
                         <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-b-lg shadow-lg max-h-60 overflow-y-auto mt-1">
-                            {cooperados.filter(c => 
-                                c.nome.toLowerCase().includes(filterCooperadoInput.toLowerCase()) || 
-                                (c.matricula && String(c.matricula).toLowerCase().includes(filterCooperadoInput.toLowerCase()))
-                            ).length > 0 ? (
-                                cooperados
-                                .filter(c => 
-                                    c.nome.toLowerCase().includes(filterCooperadoInput.toLowerCase()) || 
-                                    (c.matricula && String(c.matricula).toLowerCase().includes(filterCooperadoInput.toLowerCase()))
-                                )
-                                .map(c => (
+                            {(() => {
+                              const filtrados = getFilteredCooperados(filterCooperadoInput);
+                              return filtrados.length > 0 ? (
+                                filtrados.map((c, index) => (
                                     <div 
                                         key={c.id} 
-                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700"
+                                        className={`px-4 py-2 cursor-pointer text-sm text-gray-700 ${
+                                          selectedFilterCooperadoIndex === index 
+                                            ? 'bg-primary-100 border-l-4 border-primary-500' 
+                                            : 'hover:bg-gray-100'
+                                        }`}
                                         onMouseDown={() => {
                                             setFilterCooperado(c.id);
                                             setFilterCooperadoInput(c.nome);
                                             setShowFilterCooperadoSuggestions(false);
+                                            setSelectedFilterCooperadoIndex(null);
                                         }}
                                     >
                                         <span className="font-bold">{c.nome}</span> 
                                         <span className="text-gray-400 text-xs ml-2">({c.matricula})</span>
                                     </div>
                                 ))
-                            ) : (
+                              ) : (
                                 <div className="px-4 py-2 text-sm text-gray-400 italic">Nenhum encontrado</div>
-                            )}
+                              );
+                            })()}
                         </div>
                     )}
                 </div>
@@ -1832,38 +1935,40 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
                             setFormCooperadoInput(e.target.value);
                             setFormCooperadoId(''); 
                             setShowCooperadoSuggestions(true);
+                            setSelectedFormCooperadoIndex(null);
                         }}
+                        onKeyDown={handleFormCooperadoKeyDown}
                         onFocus={() => setShowCooperadoSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowCooperadoSuggestions(false), 200)}
                     />
                     {showCooperadoSuggestions && formCooperadoInput && (
                         <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-b-lg shadow-lg max-h-60 overflow-y-auto mt-1">
-                            {cooperados.filter(c => 
-                                c.nome.toLowerCase().includes(formCooperadoInput.toLowerCase()) || 
-                                (c.matricula && String(c.matricula).toLowerCase().includes(formCooperadoInput.toLowerCase()))
-                            ).length > 0 ? (
-                                cooperados
-                                .filter(c => 
-                                    c.nome.toLowerCase().includes(formCooperadoInput.toLowerCase()) || 
-                                    (c.matricula && String(c.matricula).toLowerCase().includes(formCooperadoInput.toLowerCase()))
-                                )
-                                .map(c => (
+                            {(() => {
+                              const filtrados = getFilteredCooperados(formCooperadoInput);
+                              return filtrados.length > 0 ? (
+                                filtrados.map((c, index) => (
                                     <div 
                                         key={c.id} 
-                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700"
+                                        className={`px-4 py-2 cursor-pointer text-sm text-gray-700 ${
+                                          selectedFormCooperadoIndex === index 
+                                            ? 'bg-primary-100 border-l-4 border-primary-500' 
+                                            : 'hover:bg-gray-100'
+                                        }`}
                                         onMouseDown={() => {
                                             setFormCooperadoId(c.id);
                                             setFormCooperadoInput(c.nome);
                                             setShowCooperadoSuggestions(false);
+                                            setSelectedFormCooperadoIndex(null);
                                         }}
                                     >
                                         <span className="font-bold">{c.nome}</span> 
                                         <span className="text-gray-400 text-xs ml-2">({c.matricula})</span>
                                     </div>
                                 ))
-                            ) : (
+                              ) : (
                                 <div className="px-4 py-2 text-sm text-gray-400 italic">Nenhum encontrado</div>
-                            )}
+                              );
+                            })()}
                         </div>
                     )}
                 </div>
