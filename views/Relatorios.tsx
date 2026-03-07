@@ -698,6 +698,14 @@ export const Relatorios: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-800">Relatórios de Produção</h2>
         <div className="flex gap-2">
           <button
+            onClick={handleGerarPontosTeste}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            title="Gera pontos aleatórios locais para testes"
+          >
+            <Download className="w-4 h-4" />
+            Gerar Pontos de Teste
+          </button>
+          <button
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow transition-colors flex items-center"
             onClick={() => setShowExportModal('pdf')}
           >
