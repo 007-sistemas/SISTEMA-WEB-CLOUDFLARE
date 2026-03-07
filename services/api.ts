@@ -50,11 +50,11 @@ export async function apiPut<T>(path: string, body: any): Promise<T> {
   return res.json();
 }
 
-export async function apiDelete<T>(path: string, query?: any): Promise<T> {
-  const url = query ? `${buildUrl(path)}?${new URLSearchParams(query).toString()}` : buildUrl(path);
-  const res = await fetch(url, {
+export async function apiDelete<T>(path: string, body?: any): Promise<T> {
+  const res = await fetch(buildUrl(path), {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();

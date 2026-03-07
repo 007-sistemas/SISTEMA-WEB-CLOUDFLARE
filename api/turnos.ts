@@ -4,7 +4,18 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'GET') {
     // Listar turnos padrões
     const rows = await sql`SELECT * FROM turnos_padroes ORDER BY nome ASC`;
-    return res.status(200).json(rows);
+    // Mapear snake_case para camelCase
+    const mapped = rows.map((r: any) => ({
+      id: r.id,
+      nome: r.nome,
+      horarioInicio: r.horario_inicio,
+      horarioFim: r.horario_fim,
+      toleranciaAntes: r.tolerancia_antes,
+      toleranciaDepois: r.tolerancia_depois,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at
+    }));
+    return res.status(200).json(mapped);
   }
   if (req.method === 'POST') {
     // Criar ou atualizar turno padrão
