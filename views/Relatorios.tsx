@@ -257,10 +257,11 @@ export const Relatorios: React.FC = () => {
     const rows: RelatorioRow[] = [];
 
     const isFechado = (entrada: RegistroPonto, saida?: RegistroPonto) => {
+      // Plantão só é fechado se REALMENTE tem saída ou foi validado
       if (saida) return true;
       if (entrada.saida && entrada.saida !== '--:--') return true;
-      if (entrada.status === 'Fechado') return true;
       if (entrada.validadoPor && entrada.status !== 'Rejeitado') return true;
+      // Se não tem saída real, é aberto (mesmo que status diga Fechado)
       return false;
     };
 
