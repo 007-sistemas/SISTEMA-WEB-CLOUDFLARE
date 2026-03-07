@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ParametrosSistema, Feriado } from '../types';
+import { ParametrosSistema, Feriado, TurnoPadrao } from '../types';
 import { ParametrosService } from '../services/parametros';
+import { apiGet, apiPost, apiDelete } from '../services/api';
 import { 
   Settings, 
   Calendar, 
@@ -16,10 +17,12 @@ import {
   Plus,
   Trash2,
   Eye,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  X
 } from 'lucide-react';
 
-type AbaAtiva = 'calendario' | 'relatorios' | 'ponto' | 'justificativas' | 'nomenclatura' | 'dashboard' | 'categorias' | 'validacoes';
+type AbaAtiva = 'calendario' | 'relatorios' | 'ponto' | 'justificativas' | 'nomenclatura' | 'dashboard' | 'categorias' | 'validacoes' | 'turnos';
 
 export const Parametros: React.FC = () => {
   const [parametros, setParametros] = useState<ParametrosSistema>(ParametrosService.getParametros());
@@ -28,6 +31,17 @@ export const Parametros: React.FC = () => {
   const [toast, setToast] = useState<{ tipo: 'success' | 'error', mensagem: string } | null>(null);
   const [novoFeriado, setNovoFeriado] = useState<Feriado>({ data: '', nome: '', tipo: 'nacional' });
   const [erroCarregamento, setErroCarregamento] = useState(false);
+
+  // Estado para Turnos
+  const [turnosPadroes, setTurnosPadroes] = useState<TurnoPadrao[]>([]);
+  const [formPadrao, setFormPadrao] = useState({
+    nome: '',
+    horarioInicio: '',
+    horarioFim: '',
+    toleranciaAntes: 0,
+    toleranciaDepois: 0
+  });
+  const [editandoPadraoId, setEditandoPadraoId] = useState<string | null>(null);
 
   useEffect(() => {
     // Carregar parâmetros do backend ao montar
@@ -42,7 +56,19 @@ export const Parametros: React.FC = () => {
         // Continue usando os parâmetros já carregados do localStorage
       }
     };
+    
+    // Carregar turnos
+    const loadTurnos = async () => {
+      try {
+        const padroes = await apiGet<TurnoPadrao[]>('turnos');
+        setTurnosPadroes(padroes);
+      } catch {
+        setTurnosPadroes([]);
+      }
+    };
+
     loadParametros();
+    loadTurnos();
   }, []);
 
   const mostrarToast = (tipo: 'success' | 'error', mensagem: string) => {
@@ -104,9 +130,71 @@ export const Parametros: React.FC = () => {
     });
   };
 
+  // Funções para Turnos
+  const salvarTurnoPadrao = async () => {
+    if (!formPadrao.nome || !formPadrao.horarioInicio || !formPadrao.horarioFim) {
+      mostrarToast('error', 'Preencha todos os campos obrigatórios');
+      return;
+    }
+    const payload = {
+      id: editandoPadraoId || undefined,
+      nome: formPadrao.nome,
+      horario_inicio: formPadrao.horarioInicio,
+      horario_fim: formPadrao.horarioFim,
+      tolerancia_antes: formPadrao.toleranciaAntes,
+      tolerancia_depois: formPadrao.toleranciaDepois
+    };
+    try {
+      await apiPost('turnos', payload);
+      const padroes = await apiGet<TurnoPadrao[]>('turnos');
+      setTurnosPadroes(padroes);
+      mostrarToast('success', editandoPadraoId ? 'Turno padrão atualizado com sucesso!' : 'Turno padrão criado com sucesso!');
+      setEditandoPadraoId(null);
+      limparFormPadrao();
+    } catch (e: any) {
+      mostrarToast('error', e?.message || 'Erro ao salvar turno padrão');
+    }
+  };
+
+  const editarTurnoPadrao = (turno: TurnoPadrao) => {
+    setFormPadrao({
+      nome: turno.nome,
+      horarioInicio: turno.horarioInicio,
+      horarioFim: turno.horarioFim,
+      toleranciaAntes: turno.toleranciaAntes,
+      toleranciaDepois: turno.toleranciaDepois
+    });
+    setEditandoPadraoId(turno.id);
+  };
+
+  const excluirTurnoPadrao = async (id: string) => {
+    if (!confirm('Tem certeza que deseja deletar este turno?')) return;
+    try {
+      await apiDelete('turnos', { id });
+      const padroes = await apiGet<TurnoPadrao[]>('turnos');
+      setTurnosPadroes(padroes);
+      mostrarToast('success', 'Turno padrão removido!');
+      limparFormPadrao();
+    } catch (e: any) {
+      mostrarToast('error', 'Erro ao deletar turno');
+    }
+  };
+
+  const limparFormPadrao = () => {
+    setFormPadrao({
+      nome: '',
+      horarioInicio: '',
+      horarioFim: '',
+      toleranciaAntes: 0,
+      toleranciaDepois: 0
+    });
+    setEditandoPadraoId(null);
+  };
+
   const abas = [
     { id: 'calendario', label: 'Calendário', icon: Calendar },
     { id: 'nomenclatura', label: 'Nomenclatura', icon: Type },
+    { id: 'turnos', label: 'Turnos Padrões', icon: Clock },
     { id: 'relatorios', label: 'Relatórios', icon: FileText },
     { id: 'ponto', label: 'Controle de Ponto', icon: Clock },
     { id: 'justificativas', label: 'Justificativas', icon: CheckCircle },
@@ -477,6 +565,137 @@ export const Parametros: React.FC = () => {
                     <p><strong>Exemplo 1:</strong> "O {parametros.nomenclatura.termoCooperado.toLowerCase()} João trabalhou no {parametros.nomenclatura.termoPlantao.toLowerCase()} {parametros.nomenclatura.turnoMatutino}"</p>
                     <p><strong>Exemplo 2:</strong> "Sábado - {parametros.nomenclatura.turnoVespertino} {parametros.nomenclatura.sufixoFDS}"</p>
                     <p><strong>Exemplo 3:</strong> "Natal (25/12) - {parametros.nomenclatura.turnoNoturno} {parametros.nomenclatura.sufixoFeriado}"</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA: TURNOS PADRÕES */}
+            {abaAtiva === 'turnos' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Turnos Padrões</h3>
+                  <p className="text-gray-600 mb-6">Cadastre turnos que podem ser reutilizados nas unidades</p>
+                
+                  {/* Formulário */}
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+                      <input
+                        type="text"
+                        value={formPadrao.nome}
+                        onChange={e => setFormPadrao({ ...formPadrao, nome: e.target.value })}
+                        placeholder="Ex: MT, T, N"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Horário Início *</label>
+                      <input
+                        type="time"
+                        value={formPadrao.horarioInicio}
+                        onChange={e => setFormPadrao({ ...formPadrao, horarioInicio: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Horário Fim *</label>
+                      <input
+                        type="time"
+                        value={formPadrao.horarioFim}
+                        onChange={e => setFormPadrao({ ...formPadrao, horarioFim: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tolerância Antes (min)</label>
+                      <input
+                        type="number"
+                        value={formPadrao.toleranciaAntes}
+                        onChange={e => setFormPadrao({ ...formPadrao, toleranciaAntes: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tolerância Depois (min)</label>
+                      <input
+                        type="number"
+                        value={formPadrao.toleranciaDepois}
+                        onChange={e => setFormPadrao({ ...formPadrao, toleranciaDepois: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mb-6">
+                    <button
+                      onClick={salvarTurnoPadrao}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+                    >
+                      <Save size={20} />
+                      {editandoPadraoId ? 'Atualizar' : 'Salvar'}
+                    </button>
+                    {editandoPadraoId && (
+                      <button
+                        onClick={limparFormPadrao}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                      >
+                        <X size={20} />
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Tabela */}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-primary-700 text-white">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Nome</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Horário Início</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Horário Fim</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Tolerância Antes</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Tolerância Depois</th>
+                            <th className="px-4 py-3 text-center text-sm font-semibold">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {turnosPadroes.length > 0 ? (
+                            turnosPadroes.map((turno) => (
+                              <tr key={turno.id} className="border-b hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm font-medium">{turno.nome}</td>
+                                <td className="px-4 py-3 text-sm">{turno.horarioInicio}</td>
+                                <td className="px-4 py-3 text-sm">{turno.horarioFim}</td>
+                                <td className="px-4 py-3 text-sm">{turno.toleranciaAntes} min</td>
+                                <td className="px-4 py-3 text-sm">{turno.toleranciaDepois} min</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="flex justify-center gap-2">
+                                    <button
+                                      onClick={() => editarTurnoPadrao(turno)}
+                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                    >
+                                      <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => excluirTurnoPadrao(turno.id)}
+                                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                                Nenhum turno padrão cadastrado
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>

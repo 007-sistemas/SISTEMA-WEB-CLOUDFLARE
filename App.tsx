@@ -12,7 +12,6 @@ import { Management } from './views/Management';
 import { Login } from './views/Login';
 import { AutorizacaoPonto } from './views/AutorizacaoPonto';
 import { UserProfile } from './views/UserProfile';
-import { TurnosValores } from './views/TurnosValores';
 import { Parametros } from './views/Parametros';
 
 import { SetoresView } from './views/Setores';
@@ -141,7 +140,6 @@ export default function App() {
       case 'gestao': return <Management />;
       case 'perfil': return <UserProfile />;
       case 'setores': return <SetoresView />;
-      case 'turnosValores': return <TurnosValores />;
       case 'parametros': return <Parametros />;
       default: return <Dashboard />;
     }

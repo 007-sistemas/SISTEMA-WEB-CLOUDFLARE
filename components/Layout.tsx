@@ -153,7 +153,6 @@ export const Layout: React.FC<LayoutProps> = ({
     { id: 'hospitais', label: 'Unidades', icon: Building2, permissionKey: 'hospitais' },
     { id: 'parametros', label: 'Parâmetros', icon: Settings, permissionKey: 'parametros' },
     { id: 'setores', label: 'Setores', icon: ShieldCheck, permissionKey: 'setores' },
-    { id: 'turnosValores', label: 'Turnos', icon: Clock, permissionKey: 'turnosValores' },
   ].sort((a, b) => a.label.localeCompare(b.label));
 
   // Menu principal (exceto perfil e cadastros)
