@@ -8,6 +8,62 @@ import { normalizeNome } from '../services/normalize';
 
 export const CooperadoRegister: React.FC = () => {
 
+    // Gerar cooperados de teste
+    const handleGerarCooperadosTeste = () => {
+      const nomes = [
+        'Ana Paula Silva', 'Bruno Costa Santos', 'Carlos Eduardo Oliveira', 'Diana Ferreira Lima',
+        'Eduardo Martins Souza', 'Fernanda Alves Rodrigues', 'Gabriel Henrique Pereira', 'Helena Maria Costa',
+        'Igor Santos Barbosa', 'Juliana Oliveira Carvalho', 'Lucas Ferreira Gomes', 'Mariana Santos Almeida',
+        'Nicolas Pereira Lima', 'Olivia Costa Ribeiro', 'Pedro Henrique Silva', 'Rafaela Martins Sousa',
+        'Rodrigo Santos Fernandes', 'Sofia Alves Cardoso', 'Thiago Costa Oliveira', 'Valentina Lima Santos'
+      ];
+      
+      const categorias = ['Médico', 'Enfermeiro', 'Técnico de Enfermagem', 'Fisioterapeuta', 'Nutricionista'];
+      const telefones = ['(81) 98765-4321', '(81) 99876-5432', '(81) 97654-3210', '(81) 96543-2109', '(81) 95432-1098'];
+      
+      const gerarCPF = () => {
+        const rand = () => Math.floor(Math.random() * 10);
+        const cpf = `${rand()}${rand()}${rand()}.${rand()}${rand()}${rand()}.${rand()}${rand()}${rand}-${rand()}${rand()}`;
+        return cpf;
+      };
+      
+      const gerarMatricula = () => {
+        const max = cooperados.length > 0 ? Math.max(...cooperados.map(c => Number(c.matricula) || 0)) : 1000;
+        return String(max + Math.floor(Math.random() * 100) + 1);
+      };
+      
+      let criados = 0;
+      const nomesAleatorios = [...nomes].sort(() => Math.random() - 0.5).slice(0, Math.min(10, nomes.length));
+      
+      nomesAleatorios.forEach(nome => {
+        const categoria = categorias[Math.floor(Math.random() * categorias.length)];
+        const telefone = telefones[Math.floor(Math.random() * telefones.length)];
+        const cpf = gerarCPF();
+        const matricula = gerarMatricula();
+        const email = nome.toLowerCase().replace(/\s+/g, '.') + '@email.com';
+        
+        const novoCooperado: Cooperado = {
+          id: crypto.randomUUID(),
+          nome: normalizeNome(nome),
+          cpf,
+          matricula,
+          categoriaProfissional: categoria,
+          telefone,
+          email,
+          status: StatusCooperado.ATIVO,
+          producaoPorCpf: Math.random() > 0.5 ? 'Sim' : 'Não',
+          biometrias: [],
+          updatedAt: new Date().toISOString()
+        };
+        
+        StorageService.saveCooperado(novoCooperado);
+        criados++;
+      });
+      
+      loadData();
+      alert(`${criados} cooperados de teste criados com sucesso!`);
+    };
+
     // Exportar apenas colunas visíveis na tela
     const exportarCooperados = () => {
       if (!cooperados.length) {
@@ -363,6 +419,14 @@ export const CooperadoRegister: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-800">Cadastro de Cooperados</h2>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleGerarCooperadosTeste}
+            className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+            title="Gerar cooperados aleatórios para testes"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Gerar Testes</span>
+          </button>
           <button
             onClick={downloadTemplate}
             className="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
