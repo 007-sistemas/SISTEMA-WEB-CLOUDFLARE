@@ -770,11 +770,10 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
     const processedEntries = new Set<string>();
     const MAX_SHIFT_MS = 24 * 60 * 60 * 1000;
 
-    const sameContext = (entrada: RegistroPonto, saida: RegistroPonto) => {
+    const sameBaseContext = (entrada: RegistroPonto, saida: RegistroPonto) => {
       return (
         String(saida.cooperadoId || '') === String(entrada.cooperadoId || '')
         && String(saida.hospitalId || '') === String(entrada.hospitalId || '')
-        && String(saida.setorId || '') === String(entrada.setorId || '')
       );
     };
 
@@ -805,27 +804,37 @@ export const ControleDeProducao: React.FC<Props> = ({ mode = 'manager' }) => {
 
         // 1ª prioridade: relatedId da entrada aponta para saída
         if (entrada.relatedId) {
-          saidaIndex = saidas.findIndex(s => s.id === entrada.relatedId && !processedExits.has(s.id));
+          saidaIndex = saidas.findIndex(s => s.id === entrada.relatedId && !processedExits.has(s.id) && sameBaseContext(entrada, s));
         }
 
         // 2ª prioridade: saída tem relatedId apontando para esta entrada
         if (saidaIndex === -1) {
-          saidaIndex = saidas.findIndex(s => s.relatedId === entrada.id && !processedExits.has(s.id));
+          saidaIndex = saidas.findIndex(s => s.relatedId === entrada.id && !processedExits.has(s.id) && sameBaseContext(entrada, s));
         }
 
         // 3ª prioridade: pareamento cronológico no mesmo contexto (até 24h)
         if (saidaIndex === -1) {
-          saidaIndex = saidas.findIndex(s => {
-            const entradaTs = new Date(entrada.timestamp).getTime();
-            const saidaTs = new Date(s.timestamp).getTime();
-            return (
-              !processedExits.has(s.id) &&
-              !s.relatedId &&
-              sameContext(entrada, s) &&
-              saidaTs > entradaTs &&
-              (saidaTs - entradaTs) <= MAX_SHIFT_MS
-            );
-          });
+          const entradaTs = new Date(entrada.timestamp).getTime();
+          const candidate = saidas
+            .map((s, idx) => ({ s, idx }))
+            .filter(({ s }) => {
+              const saidaTs = new Date(s.timestamp).getTime();
+              return (
+                !processedExits.has(s.id)
+                && !s.relatedId
+                && sameBaseContext(entrada, s)
+                && saidaTs > entradaTs
+                && (saidaTs - entradaTs) <= MAX_SHIFT_MS
+              );
+            })
+            .sort((a, b) => {
+              const sameSetorA = String(a.s.setorId || '') === String(entrada.setorId || '') ? 0 : 1;
+              const sameSetorB = String(b.s.setorId || '') === String(entrada.setorId || '') ? 0 : 1;
+              if (sameSetorA !== sameSetorB) return sameSetorA - sameSetorB;
+              return new Date(a.s.timestamp).getTime() - new Date(b.s.timestamp).getTime();
+            })[0];
+
+          saidaIndex = candidate ? candidate.idx : -1;
         }
 
         if (saidaIndex !== -1) {

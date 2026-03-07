@@ -101,6 +101,61 @@ const encontrarEntradaDaSaida = (list: RegistroPonto[], saida: RegistroPonto): R
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
 };
 
+const reconciliarPareamentoComSetorDaSaida = (list: RegistroPonto[]) => {
+  const updated = [...list];
+  let changed = false;
+
+  const saidas = updated
+    .filter(p => isSaida(p.tipo))
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  saidas.forEach(saida => {
+    const entrada = encontrarEntradaDaSaida(updated, saida);
+    if (!entrada) return;
+    if (entrada.relatedId && entrada.relatedId !== saida.id) return;
+
+    const entradaIndex = updated.findIndex(p => p.id === entrada.id);
+    const saidaIndex = updated.findIndex(p => p.id === saida.id);
+    if (entradaIndex === -1 || saidaIndex === -1) return;
+
+    const novaEntrada: RegistroPonto = {
+      ...updated[entradaIndex],
+      setorId: saida.setorId || updated[entradaIndex].setorId,
+      hospitalId: saida.hospitalId || updated[entradaIndex].hospitalId,
+      local: saida.local || updated[entradaIndex].local,
+      relatedId: updated[entradaIndex].relatedId || saida.id
+    };
+
+    const novaSaida: RegistroPonto = {
+      ...updated[saidaIndex],
+      relatedId: updated[saidaIndex].relatedId || entrada.id
+    };
+
+    const mudouEntrada = (
+      String(novaEntrada.setorId || '') !== String(updated[entradaIndex].setorId || '')
+      || String(novaEntrada.hospitalId || '') !== String(updated[entradaIndex].hospitalId || '')
+      || String(novaEntrada.local || '') !== String(updated[entradaIndex].local || '')
+      || String(novaEntrada.relatedId || '') !== String(updated[entradaIndex].relatedId || '')
+    );
+
+    const mudouSaida = String(novaSaida.relatedId || '') !== String(updated[saidaIndex].relatedId || '');
+
+    if (mudouEntrada) {
+      updated[entradaIndex] = novaEntrada;
+      syncToNeon('sync_ponto', toSyncPontoPayload(novaEntrada));
+      changed = true;
+    }
+
+    if (mudouSaida) {
+      updated[saidaIndex] = novaSaida;
+      syncToNeon('sync_ponto', toSyncPontoPayload(novaSaida));
+      changed = true;
+    }
+  });
+
+  return { updated, changed };
+};
+
 const DEFAULT_USER_PREFERENCES: UserPreferences = {
   theme: 'auto',
   primaryColor: '#7c3aed',
@@ -860,10 +915,12 @@ export const StorageService = {
         ...localManualFiltrado.filter(l => !mapped.some(r => r.id === l.id))
       ];
 
+      const { updated: reconciled } = reconciliarPareamentoComSetorDaSaida(merged);
+
 
       // Liberação automática removida: só ocorre em savePonto/updatePonto, nunca em sincronização/importação.
 
-      localStorage.setItem(PONTOS_KEY, JSON.stringify(merged));
+      localStorage.setItem(PONTOS_KEY, JSON.stringify(reconciled));
     } catch (err) {
       console.error('[StorageService] Erro ao sincronizar pontos do Neon:', err);
     }
