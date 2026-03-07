@@ -431,6 +431,7 @@ export const StorageService = {
         perfil: true,
         solicitacoesLiberacao: true,
         setores: true,
+        parametros: true,
       };
       managers.push({
         id: 'manager-seed',

@@ -151,6 +151,7 @@ export const Layout: React.FC<LayoutProps> = ({
     { id: 'cadastro', label: 'Cooperados', icon: Users, permissionKey: 'cadastro' },
     { id: 'gestao', label: 'Gestão de Usuários', icon: Briefcase, permissionKey: 'gestao' },
     { id: 'hospitais', label: 'Unidades', icon: Building2, permissionKey: 'hospitais' },
+    { id: 'parametros', label: 'Parâmetros', icon: Settings, permissionKey: 'parametros' },
     { id: 'setores', label: 'Setores', icon: ShieldCheck, permissionKey: 'setores' },
     { id: 'turnosValores', label: 'Turnos', icon: Clock, permissionKey: 'turnosValores' },
   ].sort((a, b) => a.label.localeCompare(b.label));
@@ -160,7 +161,6 @@ export const Layout: React.FC<LayoutProps> = ({
     { id: 'autorizacao', label: 'Justificativa de Plantão', icon: CheckSquare, permissionKey: 'autorizacao' },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, permissionKey: 'dashboard' },
     { id: 'espelho', label: 'Espelho da Biometria', icon: FileClock, permissionKey: 'espelho' },
-    { id: 'parametros', label: 'Parâmetros', icon: Settings, permissionKey: 'parametros' },
     { id: 'relatorio', label: 'Controle de Produção', icon: FileText, permissionKey: 'relatorio' },
     { id: 'relatorios', label: 'Relatórios', icon: FileText, permissionKey: 'relatorios' },
   ];

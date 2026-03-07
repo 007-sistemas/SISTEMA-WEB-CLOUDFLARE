@@ -43,7 +43,8 @@ export const Management: React.FC = () => {
       perfil: false,
       solicitacoesLiberacao: false,
       setores: false,
-      turnosValores: false
+      turnosValores: false,
+      parametros: false
     }
   };
   
@@ -131,7 +132,8 @@ export const Management: React.FC = () => {
       perfil: false,
       solicitacoesLiberacao: false,
       setores: false,
-      turnosValores: false
+      turnosValores: false,
+      parametros: false
     };
     if (categoria === 'gestor') {
       Object.keys(permissoes).forEach(k => permissoes[k as keyof HospitalPermissions] = true);
@@ -285,6 +287,7 @@ export const Management: React.FC = () => {
     { key: 'hospitais', label: 'Unidades' },
     { key: 'setores', label: 'Setores' },
     { key: 'turnosValores', label: 'Turnos' },
+    { key: 'parametros', label: 'Parâmetros' },
     { key: 'biometria', label: 'Biometria' },
     { key: 'gestao', label: 'Gestão de Usuários' },
     { key: 'perfil', label: 'Meu Perfil' },
