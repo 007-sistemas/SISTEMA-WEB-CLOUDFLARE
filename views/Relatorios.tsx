@@ -50,7 +50,7 @@ export const Relatorios: React.FC = () => {
             plantoesAbertos: relatorioData.filter(r => r.status === 'Em Aberto').length,
             totalHoras: relatorioData.reduce((acc, r) => {
               if (r.totalHoras === '--') return acc;
-              const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
+              const [hours, minutes] = r.totalHoras.split(':').map(Number);
               return acc + hours + (minutes / 60);
             }, 0).toFixed(1) + 'h'
           };
@@ -321,7 +321,7 @@ export const Relatorios: React.FC = () => {
         const diffMs = saidaDate.getTime() - new Date(entrada.timestamp).getTime();
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        totalHoras = `${diffHours}h ${diffMinutes}m`;
+        totalHoras = `${diffHours}:${diffMinutes.toString().padStart(2, '0')}`;
       }
 
       const status = isFechado(entrada, saida) ? 'Fechado' : 'Em Aberto';
@@ -493,7 +493,7 @@ export const Relatorios: React.FC = () => {
       plantoesAbertos: relatorioData.filter(r => r.status === 'Em Aberto').length,
       totalHoras: relatorioData.reduce((acc, r) => {
         if (r.totalHoras === '--') return acc;
-        const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
+        const [hours, minutes] = r.totalHoras.split(':').map(Number);
         return acc + hours + (minutes / 60);
       }, 0).toFixed(1) + 'h'
     };
@@ -535,7 +535,7 @@ export const Relatorios: React.FC = () => {
       plantoesAbertos: relatorioData.filter(r => r.status === 'Em Aberto').length,
       totalHoras: relatorioData.reduce((acc, r) => {
         if (r.totalHoras === '--') return acc;
-        const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
+        const [hours, minutes] = r.totalHoras.split(':').map(Number);
         return acc + hours + (minutes / 60);
       }, 0).toFixed(1) + 'h'
     };
@@ -577,7 +577,7 @@ export const Relatorios: React.FC = () => {
       plantoesAbertos: relatorioData.filter(r => r.status === 'Em Aberto').length,
       totalHoras: relatorioData.reduce((acc, r) => {
         if (r.totalHoras === '--') return acc;
-        const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
+        const [hours, minutes] = r.totalHoras.split(':').map(Number);
         return acc + hours + (minutes / 60);
       }, 0).toFixed(1) + 'h'
     };
@@ -619,7 +619,7 @@ export const Relatorios: React.FC = () => {
       plantoesAbertos: relatorioData.filter(r => r.status === 'Em Aberto').length,
       totalHoras: relatorioData.reduce((acc, r) => {
         if (r.totalHoras === '--') return acc;
-        const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
+        const [hours, minutes] = r.totalHoras.split(':').map(Number);
         return acc + hours + (minutes / 60);
       }, 0).toFixed(1) + 'h'
     };
@@ -1023,7 +1023,7 @@ export const Relatorios: React.FC = () => {
           <div className="text-xs text-gray-500">Total de Horas</div>
           <div className="text-xl font-bold text-blue-600">{relatorioData.reduce((acc, r) => {
             if (r.totalHoras === '--') return acc;
-            const [hours, minutes] = r.totalHoras.replace('h', '').replace('m', '').split(' ').map(Number);
+            const [hours, minutes] = r.totalHoras.split(':').map(Number);
             return acc + hours + (minutes / 60);
           }, 0).toFixed(1)}h</div>
         </div>
