@@ -211,8 +211,15 @@ export interface Feriado {
 // Interface para Parâmetros do Sistema
 export interface ParametrosSistema {
   id: string;
+
+  // 1. Empresa
+  empresa: {
+    cnpj: string;
+    razaoSocial: string;
+    nomeFantasia: string;
+  };
   
-  // 1. Calendário
+  // 2. Calendário
   calendario: {
     considerarFinaisDeSemana: boolean;
     considerarFeriados: boolean;
@@ -221,7 +228,7 @@ export interface ParametrosSistema {
     formatoHora: '24h' | '12h';
   };
 
-  // 2. Relatórios
+  // 3. Relatórios
   relatorios: {
     camposVisiveis: string[];
     ordenacaoPadrao: Array<{campo: string, ordem: 'asc'|'desc'}>;
@@ -243,7 +250,7 @@ export interface ParametrosSistema {
     assinaturaDigital: boolean;
   };
 
-  // 3. Controle de Ponto
+  // 4. Controle de Ponto
   ponto: {
     toleranciaPareamentoHoras: number;
     exigirCodigoPareamento: boolean;
@@ -254,7 +261,7 @@ export interface ParametrosSistema {
     confirmarExclusao: boolean;
   };
 
-  // 4. Justificativas
+  // 5. Justificativas
   justificativas: {
     aprovarAutomaticamente: {
       atestadoMedico: boolean;
@@ -271,7 +278,7 @@ export interface ParametrosSistema {
     niveisAprovacao: 1 | 2 | 3;
   };
 
-  // 5. Nomenclatura
+  // 6. Nomenclatura
   nomenclatura: {
     sufixoFDS: string;
     sufixoFeriado: string;
@@ -279,14 +286,14 @@ export interface ParametrosSistema {
     termoPlantao: string;
   };
 
-  // 6. Dashboard
+  // 7. Dashboard
   dashboard: {
     periodoPadrao: 'hoje' | 'semana' | 'mes' | 'personalizado';
     widgetsVisiveis: string[];
     qtdRegistrosRecentes: number;
   };
 
-  // 7. Categorias
+  // 8. Categorias
   categorias: {
     ativas: string[];
     exigirRegistroProfissional: {
@@ -297,7 +304,7 @@ export interface ParametrosSistema {
     exibirValorHoraPorCategoria: boolean;
   };
 
-  // 8. Validações
+  // 9. Validações
   validacoes: {
     intervaloMinimoEntrePlantoes: number;
     cargaHorariaMaximaSemanal: number;

@@ -2,6 +2,7 @@
 import ExcelJS from 'exceljs/dist/exceljs.min.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { ParametrosService } from './parametros';
 
 export interface RelatorioRow {
   cooperadoNome: string;
@@ -47,6 +48,25 @@ const formatarData = (data: string): string => {
   if (!data) return '';
   const [ano, mes, dia] = data.split('-');
   return `${dia}/${mes}/${ano}`;
+};
+
+const formatarCnpj = (cnpj: string): string => {
+  const digits = (cnpj || '').replace(/\D/g, '');
+  if (digits.length !== 14) return cnpj || 'Não informado';
+  return digits
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{2})$/, '$1-$2');
+};
+
+const getEmpresaCabecalho = () => {
+  const parametros = ParametrosService.getParametros();
+  return {
+    razaoSocial: parametros.empresa?.razaoSocial || 'Razão social não informada',
+    cnpj: formatarCnpj(parametros.empresa?.cnpj || ''),
+    nomeFantasia: parametros.empresa?.nomeFantasia || ''
+  };
 };
 
 /**
@@ -137,6 +157,7 @@ export const exportToPDF = async (
   stats: ExportStats
 ) => {
   try {
+    const empresa = getEmpresaCabecalho();
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -162,15 +183,20 @@ export const exportToPDF = async (
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8.5);
     pdf.setTextColor(255, 255, 255);
-    pdf.text('Cooperativa de Trabalho dos Profissionais de Enfermagem do Ceará e das Demais Áreas da Saúde', pdf.internal.pageSize.getWidth() / 2, 12, { align: 'center', maxWidth: pdf.internal.pageSize.getWidth() - 62 });
+    pdf.text(empresa.razaoSocial, pdf.internal.pageSize.getWidth() / 2, 12, { align: 'center', maxWidth: pdf.internal.pageSize.getWidth() - 62 });
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
-    pdf.text('CNPJ: 03031687000110', pdf.internal.pageSize.getWidth() / 2, 17, { align: 'center' });
+    pdf.text(`CNPJ: ${empresa.cnpj}`, pdf.internal.pageSize.getWidth() / 2, 17, { align: 'center' });
+    if (empresa.nomeFantasia) {
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.text(empresa.nomeFantasia, pdf.internal.pageSize.getWidth() / 2, 20.5, { align: 'center', maxWidth: pdf.internal.pageSize.getWidth() - 62 });
+    }
     const periodo = (filters.dataIni && filters.dataFim) ? `Período: ${formatarData(filters.dataIni)} a ${formatarData(filters.dataFim)}` : 'Período não informado';
     pdf.setFont('helvetica', 'normal');
-    pdf.text(periodo, pdf.internal.pageSize.getWidth() / 2, 23, { align: 'center' });
+    pdf.text(periodo, pdf.internal.pageSize.getWidth() / 2, 24, { align: 'center' });
     const dataGeracao = new Date().toLocaleString('pt-BR');
-    pdf.text(`Gerado em: ${dataGeracao}`, pdf.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+    pdf.text(`Gerado em: ${dataGeracao}`, pdf.internal.pageSize.getWidth() / 2, 29, { align: 'center' });
 
     // Página
     pdf.setFont('helvetica', 'normal');
@@ -481,6 +507,7 @@ export const exportToPDFByCooperado = async (
   stats: ExportStats
 ) => {
   try {
+    const empresa = getEmpresaCabecalho();
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -529,15 +556,20 @@ export const exportToPDFByCooperado = async (
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('Cooperativa de Trabalho dos Profissionais de Enfermagem do Ceará e das Demais Áreas da Saúde', pageWidth / 2, 13, { align: 'center', maxWidth: pageWidth - 62 });
+      pdf.text(empresa.razaoSocial, pageWidth / 2, 12.5, { align: 'center', maxWidth: pageWidth - 62 });
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(10);
-      pdf.text('CNPJ: 03031687000110', pageWidth / 2, 18, { align: 'center' });
+      pdf.text(`CNPJ: ${empresa.cnpj}`, pageWidth / 2, 17, { align: 'center' });
+      if (empresa.nomeFantasia) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8.5);
+        pdf.text(empresa.nomeFantasia, pageWidth / 2, 20.5, { align: 'center', maxWidth: pageWidth - 62 });
+      }
       const periodo = (filters.dataIni && filters.dataFim) ? `Período: ${formatarData(filters.dataIni)} a ${formatarData(filters.dataFim)}` : 'Período não informado';
       pdf.setFont('helvetica', 'normal');
-      pdf.text(periodo, pageWidth / 2, 23, { align: 'center' });
+      pdf.text(periodo, pageWidth / 2, 24, { align: 'center' });
       const dataGeracao = new Date().toLocaleString('pt-BR');
-      pdf.text(`Gerado em: ${dataGeracao}`, pageWidth / 2, 28, { align: 'center' });
+      pdf.text(`Gerado em: ${dataGeracao}`, pageWidth / 2, 29, { align: 'center' });
 
       // Página
       pdf.setFont('helvetica', 'normal');

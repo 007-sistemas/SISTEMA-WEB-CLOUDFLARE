@@ -8,7 +8,7 @@ import {
   FileText, 
   Clock, 
   CheckCircle, 
-  Type, 
+  Building2,
   LayoutDashboard,
   Users,
   Shield,
@@ -22,15 +22,34 @@ import {
   X
 } from 'lucide-react';
 
-type AbaAtiva = 'calendario' | 'relatorios' | 'ponto' | 'justificativas' | 'nomenclatura' | 'dashboard' | 'categorias' | 'validacoes' | 'turnos';
+type AbaAtiva = 'empresa' | 'calendario' | 'relatorios' | 'ponto' | 'justificativas' | 'dashboard' | 'categorias' | 'validacoes' | 'turnos';
+
+type DadosCnpjBrasilApi = {
+  cnpj?: string;
+  razao_social?: string;
+  nome_fantasia?: string;
+};
+
+const limparCnpj = (valor: string): string => valor.replace(/\D/g, '').slice(0, 14);
+
+const formatarCnpj = (valor: string): string => {
+  const digits = limparCnpj(valor);
+  return digits
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+};
 
 export const Parametros: React.FC = () => {
   const [parametros, setParametros] = useState<ParametrosSistema>(ParametrosService.getParametros());
-  const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('calendario');
+  const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('empresa');
   const [salvando, setSalvando] = useState(false);
   const [toast, setToast] = useState<{ tipo: 'success' | 'error', mensagem: string } | null>(null);
   const [novoFeriado, setNovoFeriado] = useState<Feriado>({ data: '', nome: '', tipo: 'nacional' });
   const [erroCarregamento, setErroCarregamento] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [ultimoCnpjConsultado, setUltimoCnpjConsultado] = useState('');
 
   // Estado para Turnos
   const [turnosPadroes, setTurnosPadroes] = useState<TurnoPadrao[]>([]);
@@ -70,6 +89,47 @@ export const Parametros: React.FC = () => {
     loadParametros();
     loadTurnos();
   }, []);
+
+  const buscarDadosEmpresaPorCnpj = async (cnpjEntrada?: string) => {
+    const cnpj = limparCnpj(cnpjEntrada ?? parametros.empresa.cnpj);
+    if (cnpj.length !== 14 || cnpj === ultimoCnpjConsultado) return;
+
+    setBuscandoCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      if (!response.ok) {
+        throw new Error(`Falha ao consultar CNPJ (${response.status})`);
+      }
+
+      const data = await response.json() as DadosCnpjBrasilApi;
+      setParametros(prev => ({
+        ...prev,
+        empresa: {
+          cnpj,
+          razaoSocial: data.razao_social || prev.empresa.razaoSocial,
+          nomeFantasia: data.nome_fantasia || prev.empresa.nomeFantasia
+        }
+      }));
+      setUltimoCnpjConsultado(cnpj);
+      mostrarToast('success', 'Dados da empresa preenchidos automaticamente pelo CNPJ.');
+    } catch (error) {
+      console.warn('Erro ao buscar CNPJ na BrasilAPI:', error);
+      mostrarToast('error', 'Não foi possível consultar o CNPJ automaticamente.');
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
+
+  useEffect(() => {
+    const cnpj = limparCnpj(parametros.empresa.cnpj);
+    if (cnpj.length !== 14 || cnpj === ultimoCnpjConsultado) return;
+
+    const timer = setTimeout(() => {
+      buscarDadosEmpresaPorCnpj(cnpj);
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [parametros.empresa.cnpj, ultimoCnpjConsultado]);
 
   const mostrarToast = (tipo: 'success' | 'error', mensagem: string) => {
     setToast({ tipo, mensagem });
@@ -192,8 +252,8 @@ export const Parametros: React.FC = () => {
   };
 
   const abas = [
+    { id: 'empresa', label: 'Empresa', icon: Building2 },
     { id: 'calendario', label: 'Calendário', icon: Calendar },
-    { id: 'nomenclatura', label: 'Nomenclatura', icon: Type },
     { id: 'turnos', label: 'Turnos Padrões', icon: Clock },
     { id: 'relatorios', label: 'Relatórios', icon: FileText },
     { id: 'ponto', label: 'Controle de Ponto', icon: Clock },
@@ -398,7 +458,7 @@ export const Parametros: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Eye className="text-blue-600 flex-shrink-0 mt-1" size={20} />
                     <div>
-                      <h5 className="font-medium text-blue-900 mb-2">Preview de Nomenclatura</h5>
+                      <h5 className="font-medium text-blue-900 mb-2">Preview de Sufixos de Turno</h5>
                       <div className="space-y-1 text-sm text-blue-800">
                         <p>• <strong>Segunda-feira:</strong> M (turno definido em Turnos Padrões)</p>
                         <p>• <strong>Sábado:</strong> M{parametros.calendario.considerarFinaisDeSemana ? ` ${parametros.nomenclatura.sufixoFDS}` : ''}</p>
@@ -410,54 +470,78 @@ export const Parametros: React.FC = () => {
               </div>
             )}
 
-            {/* ABA: NOMENCLATURA */}
-            {abaAtiva === 'nomenclatura' && (
+            {/* ABA: EMPRESA */}
+            {abaAtiva === 'empresa' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">Personalizar Nomenclatura</h3>
-                  <p className="text-gray-600 mb-6">Define como cooperados e outros termos aparecem no sistema</p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Dados da Empresa</h3>
+                  <p className="text-gray-600 mb-6">Esses dados serão usados no cabeçalho do relatório de produção</p>
 
-                  {/* Termos Gerais */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block font-medium text-gray-800 mb-2">Termo para "Cooperado"</label>
+                      <label className="block font-medium text-gray-800 mb-2">CNPJ</label>
                       <input
                         type="text"
-                        value={parametros.nomenclatura.termoCooperado}
+                        value={formatarCnpj(parametros.empresa.cnpj)}
                         onChange={(e) => setParametros({
                           ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, termoCooperado: e.target.value }
+                          empresa: { ...parametros.empresa, cnpj: limparCnpj(e.target.value) }
                         })}
+                        onBlur={() => buscarDadosEmpresaPorCnpj()}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: Cooperado, Profissional, Colaborador"
+                        placeholder="00.000.000/0000-00"
                       />
                     </div>
                     <div>
-                      <label className="block font-medium text-gray-800 mb-2">Termo para "Plantão"</label>
+                      <label className="block font-medium text-gray-800 mb-2">Razão Social</label>
                       <input
                         type="text"
-                        value={parametros.nomenclatura.termoPlantao}
+                        value={parametros.empresa.razaoSocial}
                         onChange={(e) => setParametros({
                           ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, termoPlantao: e.target.value }
+                          empresa: { ...parametros.empresa, razaoSocial: e.target.value }
                         })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: Plantão, Turno, Jornada"
+                        placeholder="Razão Social da empresa"
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* Preview ao Vivo */}
-                <div className="mt-6 p-6 bg-gradient-to-br from-primary-50 to-blue-50 border border-primary-200 rounded-lg">
-                  <h5 className="font-bold text-primary-900 mb-4 flex items-center gap-2">
-                    <Eye size={20} />
-                    Preview em Tempo Real
-                  </h5>
-                  <div className="bg-white p-4 rounded-lg shadow-sm space-y-3 text-sm">
-                    <p><strong>Exemplo 1:</strong> "O {parametros.nomenclatura.termoCooperado.toLowerCase()} João trabalhou no {parametros.nomenclatura.termoPlantao.toLowerCase()} {parametros.nomenclatura.turnoMatutino}"</p>
-                    <p><strong>Exemplo 2:</strong> "Sábado - {parametros.nomenclatura.turnoVespertino} {parametros.nomenclatura.sufixoFDS}"</p>
-                    <p><strong>Exemplo 3:</strong> "Natal (25/12) - {parametros.nomenclatura.turnoNoturno} {parametros.nomenclatura.sufixoFeriado}"</p>
+                  <div className="mt-4">
+                    <label className="block font-medium text-gray-800 mb-2">Nome Fantasia</label>
+                    <input
+                      type="text"
+                      value={parametros.empresa.nomeFantasia}
+                      onChange={(e) => setParametros({
+                        ...parametros,
+                        empresa: { ...parametros.empresa, nomeFantasia: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      placeholder="Nome Fantasia"
+                    />
+                  </div>
+
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-blue-900">
+                        {buscandoCnpj ? 'Consultando CNPJ na BrasilAPI...' : 'Ao digitar o CNPJ completo, o sistema tenta preencher Razão Social e Nome Fantasia automaticamente.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => buscarDadosEmpresaPorCnpj()}
+                        disabled={buscandoCnpj || limparCnpj(parametros.empresa.cnpj).length !== 14}
+                        className="px-3 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                      >
+                        {buscandoCnpj ? 'Buscando...' : 'Buscar CNPJ'}
+                      </button>
+                    </div>
+
+                    <div className="mt-4 text-sm text-blue-800 space-y-1">
+                      <p><strong>Preview do cabeçalho:</strong></p>
+                      <p>{parametros.empresa.razaoSocial || 'Razão Social não informada'}</p>
+                      <p><strong>CNPJ:</strong> {formatarCnpj(parametros.empresa.cnpj) || 'Não informado'}</p>
+                      <p>{parametros.empresa.nomeFantasia || 'Nome Fantasia não informado'}</p>
+                    </div>
                   </div>
                 </div>
               </div>
