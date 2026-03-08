@@ -105,6 +105,7 @@ export const Parametros: React.FC = () => {
       setParametros(prev => ({
         ...prev,
         empresa: {
+          ...prev.empresa,
           cnpj,
           razaoSocial: data.razao_social || prev.empresa.razaoSocial,
           nomeFantasia: data.nome_fantasia || prev.empresa.nomeFantasia
@@ -134,6 +135,58 @@ export const Parametros: React.FC = () => {
   const mostrarToast = (tipo: 'success' | 'error', mensagem: string) => {
     setToast({ tipo, mensagem });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleUploadLogoEmpresa = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      mostrarToast('error', 'Selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    const tamanhoMaximo = 2 * 1024 * 1024;
+    if (file.size > tamanhoMaximo) {
+      mostrarToast('error', 'A imagem deve ter no máximo 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = typeof reader.result === 'string' ? reader.result : '';
+      if (!base64) {
+        mostrarToast('error', 'Não foi possível processar a imagem.');
+        return;
+      }
+
+      setParametros(prev => ({
+        ...prev,
+        empresa: {
+          ...prev.empresa,
+          logoEmpresa: base64
+        }
+      }));
+      mostrarToast('success', 'Logo da empresa anexada com sucesso.');
+    };
+
+    reader.onerror = () => {
+      mostrarToast('error', 'Erro ao ler a imagem selecionada.');
+    };
+
+    reader.readAsDataURL(file);
+    event.currentTarget.value = '';
+  };
+
+  const removerLogoEmpresa = () => {
+    setParametros(prev => ({
+      ...prev,
+      empresa: {
+        ...prev.empresa,
+        logoEmpresa: ''
+      }
+    }));
+    mostrarToast('success', 'Logo da empresa removida.');
   };
 
   const salvarParametros = async () => {
@@ -521,6 +574,42 @@ export const Parametros: React.FC = () => {
                     />
                   </div>
 
+                  <div className="mt-4">
+                    <label className="block font-medium text-gray-800 mb-2">Logo da Empresa (relatórios)</label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition cursor-pointer text-sm">
+                        Anexar Logo
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/webp"
+                          onChange={handleUploadLogoEmpresa}
+                          className="hidden"
+                        />
+                      </label>
+                      {parametros.empresa.logoEmpresa && (
+                        <button
+                          type="button"
+                          onClick={removerLogoEmpresa}
+                          className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm"
+                        >
+                          Remover Logo
+                        </button>
+                      )}
+                      <span className="text-xs text-gray-500">PNG/JPG/WEBP até 2MB</span>
+                    </div>
+
+                    {parametros.empresa.logoEmpresa && (
+                      <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-white">
+                        <p className="text-xs text-gray-500 mb-2">Preview da logo:</p>
+                        <img
+                          src={parametros.empresa.logoEmpresa}
+                          alt="Logo da empresa"
+                          className="h-16 object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm text-blue-900">
@@ -541,6 +630,7 @@ export const Parametros: React.FC = () => {
                       <p>{parametros.empresa.razaoSocial || 'Razão Social não informada'}</p>
                       <p><strong>CNPJ:</strong> {formatarCnpj(parametros.empresa.cnpj) || 'Não informado'}</p>
                       <p>{parametros.empresa.nomeFantasia || 'Nome Fantasia não informado'}</p>
+                      <p>{parametros.empresa.logoEmpresa ? 'Logo da empresa configurada.' : 'Logo da empresa não configurada.'}</p>
                     </div>
                   </div>
                 </div>

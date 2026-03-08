@@ -10,7 +10,8 @@ export const PARAMETROS_PADRAO: ParametrosSistema = {
   empresa: {
     cnpj: '03031687000110',
     razaoSocial: 'Cooperativa de Trabalho dos Profissionais de Enfermagem do Ceará e das Demais Áreas da Saúde',
-    nomeFantasia: 'iDev Sistemas'
+    nomeFantasia: 'iDev Sistemas',
+    logoEmpresa: ''
   },
   
   calendario: {

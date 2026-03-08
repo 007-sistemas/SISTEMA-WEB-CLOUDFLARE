@@ -65,8 +65,31 @@ const getEmpresaCabecalho = () => {
   return {
     razaoSocial: parametros.empresa?.razaoSocial || 'Razão social não informada',
     cnpj: formatarCnpj(parametros.empresa?.cnpj || ''),
-    nomeFantasia: parametros.empresa?.nomeFantasia || ''
+    nomeFantasia: parametros.empresa?.nomeFantasia || '',
+    logoEmpresa: parametros.empresa?.logoEmpresa || parametros.relatorios?.logoEmpresa || ''
   };
+};
+
+const inferirFormatoImagem = (imagemBase64OuUrl: string): 'PNG' | 'JPEG' => {
+  const valor = (imagemBase64OuUrl || '').toLowerCase();
+  if (valor.startsWith('data:image/jpeg') || valor.startsWith('data:image/jpg')) {
+    return 'JPEG';
+  }
+  return 'PNG';
+};
+
+const desenharMarcaIdevRodape = (pdf: jsPDF) => {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  try {
+    pdf.addImage('/iDev Logo.png', 'PNG', pageWidth - 22, pageHeight - 11, 10, 6);
+  } catch (err) {
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7);
+    pdf.setTextColor(150, 150, 150);
+    pdf.text('iDev Sistemas', pageWidth - 12, pageHeight - 8, { align: 'right' });
+  }
 };
 
 /**
@@ -169,14 +192,13 @@ export const exportToPDF = async (
     pdf.setFillColor(106, 27, 154); // Roxo
     pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), 32, 'F');
 
-    // LOGO à esquerda sobre fundo roxo
-    try {
-      // O jsPDF espera base64 ou URL absoluta acessível. Para ambiente web, use caminho relativo a partir do public.
-      // O nome do arquivo é 'iDev Logo Branco.png'.
-      // O ideal é converter para base64, mas tentaremos o caminho direto:
-      pdf.addImage('/iDev Logo Branco.png', 'PNG', 10, 6, 22, 18);
-    } catch (err) {
-      // fallback: nada
+    // Logo da empresa no cabeçalho (se configurada)
+    if (empresa.logoEmpresa) {
+      try {
+        pdf.addImage(empresa.logoEmpresa, inferirFormatoImagem(empresa.logoEmpresa), 10, 6, 22, 18);
+      } catch (err) {
+        // fallback: segue sem logo no cabeçalho
+      }
     }
 
     // Informações institucionais (em branco, centralizadas)
@@ -204,6 +226,7 @@ export const exportToPDF = async (
     // pdf.text(`Página 1 de {n}`, pdf.internal.pageSize.getWidth() - 32, 13); // {n} será substituído pelo jsPDF
     // Número da página centralizado no rodapé
     pdf.text(`${data.pageNumber}`, pdf.internal.pageSize.getWidth() / 2, pdf.internal.pageSize.getHeight() - 10, { align: 'center' });
+    desenharMarcaIdevRodape(pdf);
 
     // Título do relatório
     let yPosition = 40;
@@ -271,6 +294,7 @@ export const exportToPDF = async (
         pdf.setTextColor(150, 150, 150);
         // Número da página centralizado no rodapé
         pdf.text(`${data.pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        desenharMarcaIdevRodape(pdf);
       },
       theme: 'grid',
       headStyles: {
@@ -553,14 +577,13 @@ export const exportToPDFByCooperado = async (
       pdf.setFillColor(106, 27, 154); // Roxo
       pdf.rect(0, 0, pageWidth, alturaCabecalho, 'F');
 
-      // LOGO à esquerda sobre fundo roxo
-      try {
-        // O jsPDF espera base64 ou URL absoluta acessível. Para ambiente web, use caminho relativo a partir do public.
-        // O nome do arquivo é 'iDev Logo Branco.png'.
-        // O ideal é converter para base64, mas tentaremos o caminho direto:
-        pdf.addImage('/iDev Logo Branco.png', 'PNG', 10, 6, 22, 18);
-      } catch (err) {
-        // fallback: nada
+      // Logo da empresa no cabeçalho (se configurada)
+      if (empresa.logoEmpresa) {
+        try {
+          pdf.addImage(empresa.logoEmpresa, inferirFormatoImagem(empresa.logoEmpresa), 10, 6, 22, 18);
+        } catch (err) {
+          // fallback: segue sem logo no cabeçalho
+        }
       }
 
       // Informações institucionais (em branco, centralizadas)
@@ -600,6 +623,7 @@ export const exportToPDFByCooperado = async (
       // pdf.text(`Página 1 de {n}`, pageWidth - 32, 13); // {n} será substituído pelo jsPDF
       // Número da página centralizado no rodapé
       pdf.text(`${data.pageNumber}`, pageWidth / 2, pdf.internal.pageSize.getHeight() - 10, { align: 'center' });
+      desenharMarcaIdevRodape(pdf);
 
 
       // Nome do profissional centralizado
@@ -655,6 +679,7 @@ export const exportToPDFByCooperado = async (
             pageHeight - 10,
             { align: 'center' }
           );
+          desenharMarcaIdevRodape(pdf);
         },
         theme: 'grid',
         headStyles: {

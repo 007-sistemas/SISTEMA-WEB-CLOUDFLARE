@@ -217,6 +217,7 @@ export interface ParametrosSistema {
     cnpj: string;
     razaoSocial: string;
     nomeFantasia: string;
+    logoEmpresa?: string;
   };
   
   // 2. Calendário
