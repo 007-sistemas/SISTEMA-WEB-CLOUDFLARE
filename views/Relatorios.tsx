@@ -326,25 +326,42 @@ export const Relatorios: React.FC = () => {
 
       const status = isFechado(entrada, saida) ? 'Fechado' : 'Em Aberto';
 
-      // Determinar turno baseado no horário de entrada
+      // Determinar turno baseado no horário de entrada com tolerâncias
       const determinarTurno = (horaEntrada: string): string => {
         if (!turnosPadroes || turnosPadroes.length === 0) return '--';
         
         const [hE, mE] = horaEntrada.split(':').map(Number);
         const entradaMinutos = hE * 60 + mE;
         
-        // Encontrar o turno que contém este horário
+        // Encontrar o turno que contém este horário (considerando tolerâncias)
         let turnoEncontrado = turnosPadroes.find(t => {
           const [hI, mI] = t.horarioInicio.split(':').map(Number);
           const [hF, mF] = t.horarioFim.split(':').map(Number);
-          const inicioMinutos = hI * 60 + mI;
-          const fimMinutos = hF * 60 + mF;
           
-          // Se fim < inicio (turno noturno), ajusta lógica
-          if (fimMinutos < inicioMinutos) {
-            return entradaMinutos >= inicioMinutos || entradaMinutos < fimMinutos;
+          // Aplicar tolerâncias
+          const toleranciaAntes = t.toleranciaAntes || 0;
+          const toleranciaDepois = t.toleranciaDepois || 0;
+          
+          // Calcular intervalo efetivo com tolerâncias
+          let inicioEfetivo = (hI * 60 + mI) - toleranciaAntes;
+          let fimEfetivo = (hF * 60 + mF) + toleranciaDepois;
+          
+          // Se fim < inicio (turno noturno que atravessa meia-noite)
+          if (hF * 60 + mF < hI * 60 + mI) {
+            // Turno noturno: ex: 19:00 (1140 min) até 07:00 (420 min)
+            // Com tolerância: 18:00 (1080) até 08:00 (480)
+            // Entrada é válida se >= inicioEfetivo OU <= fimEfetivo
+            if (entradaMinutos >= inicioEfetivo || entradaMinutos <= fimEfetivo) {
+              return true;
+            }
+          } else {
+            // Turno normal: entrada deve estar entre inicioEfetivo e fimEfetivo
+            if (entradaMinutos >= inicioEfetivo && entradaMinutos <= fimEfetivo) {
+              return true;
+            }
           }
-          return entradaMinutos >= inicioMinutos && entradaMinutos < fimMinutos;
+          
+          return false;
         });
         
         return turnoEncontrado?.nome || '--';
