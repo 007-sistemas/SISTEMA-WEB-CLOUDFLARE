@@ -537,10 +537,21 @@ export const exportToPDFByCooperado = async (
       const pageWidth = pdf.internal.pageSize.getWidth();
       let yPosition = 15;
 
+      const razaoSocialLinhasBrutas = pdf.splitTextToSize(empresa.razaoSocial, pageWidth - 62) as string[];
+      const razaoSocialLinhas = razaoSocialLinhasBrutas.slice(0, 2);
+      if (razaoSocialLinhasBrutas.length > 2) {
+        const ultimaLinha = razaoSocialLinhas[1] || '';
+        razaoSocialLinhas[1] = `${ultimaLinha.slice(0, Math.max(0, ultimaLinha.length - 3))}...`;
+      }
+
+      const alturaLinhasRazao = razaoSocialLinhas.length * 3.6;
+      const linhasInformativas = 3 + (empresa.nomeFantasia ? 1 : 0); // CNPJ + período + geração (+ fantasia opcional)
+      const alturaCabecalho = Math.max(32, 10 + alturaLinhasRazao + linhasInformativas * 4 + 4);
+
       // === CABEÇALHO MODERNO ===
       // Faixa roxa no topo
       pdf.setFillColor(106, 27, 154); // Roxo
-      pdf.rect(0, 0, pageWidth, 32, 'F');
+      pdf.rect(0, 0, pageWidth, alturaCabecalho, 'F');
 
       // LOGO à esquerda sobre fundo roxo
       try {
@@ -556,20 +567,32 @@ export const exportToPDFByCooperado = async (
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
       pdf.setTextColor(255, 255, 255);
-      pdf.text(empresa.razaoSocial, pageWidth / 2, 12.5, { align: 'center', maxWidth: pageWidth - 62 });
+
+      let cabecalhoY = 10;
+      razaoSocialLinhas.forEach((linha) => {
+        pdf.text(linha, pageWidth / 2, cabecalhoY, { align: 'center' });
+        cabecalhoY += 3.6;
+      });
+
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(10);
-      pdf.text(`CNPJ: ${empresa.cnpj}`, pageWidth / 2, 17, { align: 'center' });
+      pdf.text(`CNPJ: ${empresa.cnpj}`, pageWidth / 2, cabecalhoY + 1, { align: 'center' });
+      cabecalhoY += 4;
+
       if (empresa.nomeFantasia) {
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(8.5);
-        pdf.text(empresa.nomeFantasia, pageWidth / 2, 20.5, { align: 'center', maxWidth: pageWidth - 62 });
+        pdf.text(empresa.nomeFantasia, pageWidth / 2, cabecalhoY + 1, { align: 'center', maxWidth: pageWidth - 62 });
+        cabecalhoY += 4;
       }
+
       const periodo = (filters.dataIni && filters.dataFim) ? `Período: ${formatarData(filters.dataIni)} a ${formatarData(filters.dataFim)}` : 'Período não informado';
       pdf.setFont('helvetica', 'normal');
-      pdf.text(periodo, pageWidth / 2, 24, { align: 'center' });
+      pdf.text(periodo, pageWidth / 2, cabecalhoY + 1, { align: 'center' });
+      cabecalhoY += 4;
+
       const dataGeracao = new Date().toLocaleString('pt-BR');
-      pdf.text(`Gerado em: ${dataGeracao}`, pageWidth / 2, 29, { align: 'center' });
+      pdf.text(`Gerado em: ${dataGeracao}`, pageWidth / 2, cabecalhoY + 1, { align: 'center' });
 
       // Página
       pdf.setFont('helvetica', 'normal');
