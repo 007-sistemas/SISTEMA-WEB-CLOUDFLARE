@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../services/storage';
-import { RegistroPonto, Cooperado, Hospital, Setor, TurnoPadrao } from '../types';
+import { RegistroPonto, Cooperado, Hospital, Setor, TurnoPadrao, ParametrosSistema } from '../types';
 import { apiGet } from '../services/api';
-import { ParametrosService } from '../services/parametros';
+import { ParametrosService, getNomeTurnoCompleto } from '../services/parametros';
 import { exportToExcel, exportToPDF, exportToExcelByCooperado, exportToPDFByCooperado } from '../services/reportExport';
 import { FileText, Download, Filter, X, FileSpreadsheet, Calendar } from 'lucide-react';
 
@@ -97,6 +97,7 @@ export const Relatorios: React.FC = () => {
   const [setoresDisponiveis, setSetoresDisponiveis] = useState<Setor[]>([]);
   const [todosSetores, setTodosSetores] = useState<Setor[]>([]); // Todos os setores de todos os hospitais
   const [turnosPadroes, setTurnosPadroes] = useState<TurnoPadrao[]>([]);
+  const [parametros, setParametros] = useState<ParametrosSistema | null>(null);
   
   // Filtros
   const [filterHospital, setFilterHospital] = useState('');
@@ -161,6 +162,14 @@ export const Relatorios: React.FC = () => {
     } catch (error) {
       console.warn('Erro ao carregar turnos:', error);
       setTurnosPadroes([]);
+    }
+    
+    // Carregar parâmetros
+    try {
+      const params = await ParametrosService.getParametros();
+      setParametros(params);
+    } catch (error) {
+      console.warn('Erro ao carregar parâmetros:', error);
     }
     
     setLogs(pontosData);
@@ -327,8 +336,9 @@ export const Relatorios: React.FC = () => {
       const status = isFechado(entrada, saida) ? 'Fechado' : 'Em Aberto';
 
       // Determinar turno baseado no horário de entrada E saída com tolerâncias
-      const determinarTurno = (horaEntrada: string, horaSaida: string): string => {
+      const determinarTurno = (horaEntrada: string, horaSaida: string, data: Date): string => {
         if (!turnosPadroes || turnosPadroes.length === 0) return '--';
+        if (!parametros) return '--';
         
         // Se não há saída registrada, não podemos determinar o turno completo
         if (horaSaida === '--' || horaSaida === '--:--') return '--';
@@ -406,10 +416,12 @@ export const Relatorios: React.FC = () => {
           });
         }
         
-        return turnosValidos[0].nome;
+        // Obter nome do turno e aplicar sufixos de FDS/Feriados
+        const nomeTurnoBase = turnosValidos[0].nome;
+        return getNomeTurnoCompleto(nomeTurnoBase, data, parametros);
       };
 
-      const turno = determinarTurno(entradaHora, saidaHora);
+      const turno = determinarTurno(entradaHora, saidaHora, dataEntrada);
 
       rows.push({
         cooperadoNome: cooperado.nome,
