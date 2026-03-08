@@ -538,8 +538,61 @@ export const Parametros: React.FC = () => {
                     )}
                   </div>
 
+                  {/* Tabela */}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden mb-8">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-primary-700 text-white">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Nome</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Horário Início</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Horário Fim</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Tolerância Antes</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Tolerância Depois</th>
+                            <th className="px-4 py-3 text-center text-sm font-semibold">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {turnosPadroes.length > 0 ? (
+                            turnosPadroes.map((turno) => (
+                              <tr key={turno.id} className="border-b hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm font-medium">{turno.nome}</td>
+                                <td className="px-4 py-3 text-sm">{turno.horarioInicio}</td>
+                                <td className="px-4 py-3 text-sm">{turno.horarioFim}</td>
+                                <td className="px-4 py-3 text-sm">{turno.toleranciaAntes} min</td>
+                                <td className="px-4 py-3 text-sm">{turno.toleranciaDepois} min</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="flex justify-center gap-2">
+                                    <button
+                                      onClick={() => editarTurnoPadrao(turno)}
+                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                    >
+                                      <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => excluirTurnoPadrao(turno.id)}
+                                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                                Nenhum turno padrão cadastrado
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                   {/* Sufixos de Turnos */}
-                  <div className="mt-8 pt-8 border-t border-gray-200">
+                  <div className="pt-8 border-t border-gray-200">
                     <h4 className="text-lg font-bold text-gray-800 mb-6">Sufixos de Turnos</h4>
                     <p className="text-gray-600 mb-6">Configure sufixos a adicionar aos nomes dos turnos em finais de semana e feriados</p>
 
@@ -616,59 +669,6 @@ export const Parametros: React.FC = () => {
                         {parametros.calendario.considerarFinaisDeSemana && <span>M{parametros.nomenclatura.sufixoFDS}</span>}
                         {parametros.calendario.considerarFeriados && <span>N{parametros.nomenclatura.sufixoFeriado}</span>}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Tabela */}
-                  <div className="border border-gray-200 rounded-lg overflow-hidden mt-8">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-primary-700 text-white">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">Nome</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">Horário Início</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">Horário Fim</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">Tolerância Antes</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">Tolerância Depois</th>
-                            <th className="px-4 py-3 text-center text-sm font-semibold">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {turnosPadroes.length > 0 ? (
-                            turnosPadroes.map((turno) => (
-                              <tr key={turno.id} className="border-b hover:bg-gray-50">
-                                <td className="px-4 py-3 text-sm font-medium">{turno.nome}</td>
-                                <td className="px-4 py-3 text-sm">{turno.horarioInicio}</td>
-                                <td className="px-4 py-3 text-sm">{turno.horarioFim}</td>
-                                <td className="px-4 py-3 text-sm">{turno.toleranciaAntes} min</td>
-                                <td className="px-4 py-3 text-sm">{turno.toleranciaDepois} min</td>
-                                <td className="px-4 py-3 text-sm">
-                                  <div className="flex justify-center gap-2">
-                                    <button
-                                      onClick={() => editarTurnoPadrao(turno)}
-                                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                    >
-                                      <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                      onClick={() => excluirTurnoPadrao(turno.id)}
-                                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                                Nenhum turno padrão cadastrado
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
                     </div>
                   </div>
                 </div>
