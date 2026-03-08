@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../services/storage';
-import { RegistroPonto, Cooperado, Hospital, Setor } from '../types';
+import { RegistroPonto, Cooperado, Hospital, Setor, TurnoPadrao } from '../types';
 import { apiGet } from '../services/api';
+import { ParametrosService } from '../services/parametros';
 import { exportToExcel, exportToPDF, exportToExcelByCooperado, exportToPDFByCooperado } from '../services/reportExport';
 import { FileText, Download, Filter, X, FileSpreadsheet, Calendar } from 'lucide-react';
 
@@ -13,6 +14,7 @@ interface RelatorioRow {
   data: string;
   entrada: string;
   saida: string;
+  turno: string;
   totalHoras: string;
   status: string;
 }
@@ -94,6 +96,7 @@ export const Relatorios: React.FC = () => {
   const [hospitais, setHospitais] = useState<Hospital[]>([]);
   const [setoresDisponiveis, setSetoresDisponiveis] = useState<Setor[]>([]);
   const [todosSetores, setTodosSetores] = useState<Setor[]>([]); // Todos os setores de todos os hospitais
+  const [turnosPadroes, setTurnosPadroes] = useState<TurnoPadrao[]>([]);
   
   // Filtros
   const [filterHospital, setFilterHospital] = useState('');
@@ -150,6 +153,15 @@ export const Relatorios: React.FC = () => {
     const pontosData = StorageService.getPontos();
     const cooperadosData = StorageService.getCooperados();
     const hospitaisData = StorageService.getHospitais();
+    
+    // Carregar turnos
+    try {
+      const turnos = await apiGet<TurnoPadrao[]>('turnos');
+      setTurnosPadroes(turnos || []);
+    } catch (error) {
+      console.warn('Erro ao carregar turnos:', error);
+      setTurnosPadroes([]);
+    }
     
     setLogs(pontosData);
     setCooperados(cooperadosData);
@@ -314,6 +326,32 @@ export const Relatorios: React.FC = () => {
 
       const status = isFechado(entrada, saida) ? 'Fechado' : 'Em Aberto';
 
+      // Determinar turno baseado no horário de entrada
+      const determinarTurno = (horaEntrada: string): string => {
+        if (!turnosPadroes || turnosPadroes.length === 0) return '--';
+        
+        const [hE, mE] = horaEntrada.split(':').map(Number);
+        const entradaMinutos = hE * 60 + mE;
+        
+        // Encontrar o turno que contém este horário
+        let turnoEncontrado = turnosPadroes.find(t => {
+          const [hI, mI] = t.horarioInicio.split(':').map(Number);
+          const [hF, mF] = t.horarioFim.split(':').map(Number);
+          const inicioMinutos = hI * 60 + mI;
+          const fimMinutos = hF * 60 + mF;
+          
+          // Se fim < inicio (turno noturno), ajusta lógica
+          if (fimMinutos < inicioMinutos) {
+            return entradaMinutos >= inicioMinutos || entradaMinutos < fimMinutos;
+          }
+          return entradaMinutos >= inicioMinutos && entradaMinutos < fimMinutos;
+        });
+        
+        return turnoEncontrado?.nome || '--';
+      };
+
+      const turno = determinarTurno(entradaHora);
+
       rows.push({
         cooperadoNome: cooperado.nome,
         categoriaProfissional: cooperado.categoriaProfissional || 'N/A',
@@ -322,6 +360,7 @@ export const Relatorios: React.FC = () => {
         data: dataEntrada.toLocaleDateString('pt-BR'),
         entrada: entradaHora,
         saida: saidaHora,
+        turno,
         totalHoras,
         status
       });
@@ -944,6 +983,7 @@ export const Relatorios: React.FC = () => {
                 <th className="px-4 py-3 text-left text-sm font-semibold">Data</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Entrada</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Saída</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Turno</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Total</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
               </tr>
@@ -951,7 +991,7 @@ export const Relatorios: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="animate-spin h-8 w-8 text-primary-500 mx-auto" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -971,6 +1011,7 @@ export const Relatorios: React.FC = () => {
                     <td className="px-4 py-3 text-sm">{row.data}</td>
                     <td className="px-4 py-3 text-sm text-green-600 font-medium">{row.entrada}</td>
                     <td className="px-4 py-3 text-sm text-red-600 font-medium">{row.saida}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-purple-700">{row.turno}</td>
                     <td className="px-4 py-3 text-sm font-medium">{row.totalHoras}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -985,7 +1026,7 @@ export const Relatorios: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                     Nenhum registro encontrado com os filtros aplicados
                   </td>
                 </tr>

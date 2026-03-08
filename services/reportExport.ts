@@ -11,6 +11,7 @@ export interface RelatorioRow {
   data: string;
   entrada: string;
   saida: string;
+  turno: string;
   totalHoras: string;
   status: string;
 }
@@ -69,18 +70,19 @@ export const exportToExcel = async (
       { header: 'Data', key: 'data', width: 12 },
       { header: 'Entrada', key: 'entrada', width: 10 },
       { header: 'Saída', key: 'saida', width: 10 },
+      { header: 'Turno', key: 'turno', width: 12 },
       { header: 'Total', key: 'totalHoras', width: 12 },
       { header: 'Status', key: 'status', width: 14 }
     ];
 
-    // Estilizar cabeçalho (apenas até a coluna I)
+    // Estilizar cabeçalho (até a coluna J - 10 colunas)
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
     headerRow.height = 20;
     
-    // Aplicar cor apenas até a coluna I (9 colunas)
-    for (let i = 1; i <= 9; i++) {
+    // Aplicar cor até a coluna J (10 colunas com turno adicionado)
+    for (let i = 1; i <= 10; i++) {
       const cell = headerRow.getCell(i);
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
     }
@@ -225,6 +227,7 @@ export const exportToPDF = async (
       { header: 'Data', dataKey: 'data' },
       { header: 'Entrada', dataKey: 'entrada' },
       { header: 'Saída', dataKey: 'saida' },
+      { header: 'Turno', dataKey: 'turno' },
       { header: 'Total', dataKey: 'totalHoras' },
       { header: 'Status', dataKey: 'status' }
     ];
@@ -400,18 +403,19 @@ export const exportToExcelByCooperado = async (
         { header: 'Data', key: 'data', width: 12 },
         { header: 'Entrada', key: 'entrada', width: 10 },
         { header: 'Saída', key: 'saida', width: 10 },
+        { header: 'Turno', key: 'turno', width: 12 },
         { header: 'Total', key: 'totalHoras', width: 12 },
         { header: 'Status', key: 'status', width: 14 }
       ];
 
-      // Estilizar cabeçalho (apenas até a coluna H)
+      // Estilizar cabeçalho (até a coluna I - 9 colunas)
       const headerRow = worksheet.getRow(1);
       headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
       headerRow.height = 20;
       
-      // Aplicar cor apenas até a coluna H (8 colunas)
-      for (let i = 1; i <= 8; i++) {
+      // Aplicar cor até a coluna I (9 colunas com turno adicionado)
+      for (let i = 1; i <= 9; i++) {
         const cell = headerRow.getCell(i);
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
       }
@@ -425,6 +429,7 @@ export const exportToExcelByCooperado = async (
           data: row.data,
           entrada: row.entrada,
           saida: row.saida,
+          turno: row.turno,
           totalHoras: row.totalHoras,
           status: row.status
         });
@@ -574,6 +579,7 @@ export const exportToPDFByCooperado = async (
         { header: 'Data', dataKey: 'data' },
         { header: 'Entrada', dataKey: 'entrada' },
         { header: 'Saída', dataKey: 'saida' },
+        { header: 'Turno', dataKey: 'turno' },
         { header: 'Total', dataKey: 'totalHoras' },
         { header: 'Status', dataKey: 'status' }
       ];
