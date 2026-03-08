@@ -571,6 +571,71 @@ CREATE TABLE parametros_sistema (
 
 ---
 
+## ✅ STATUS ATUAL E TAREFAS RESTANTES (07/03/2026)
+
+### Já implementado
+- ✅ Aba `Empresa` com campos: CNPJ, Razão Social e Nome Fantasia
+- ✅ Consulta automática de CNPJ via BrasilAPI
+- ✅ Upload de logo da empresa (base64) em Parâmetros
+- ✅ Cabeçalho do PDF usando dados da empresa (razão social, CNPJ, nome fantasia)
+- ✅ Logo iDev realocada para rodapé pequeno no PDF
+- ✅ Aba `Nomenclatura` removida da tela de Parâmetros
+- ✅ Sufixos FDS/Feriado centralizados em `Turnos Padrões`
+- ✅ Coluna `Turno` em Relatórios com regra de faixa/tolerância e virada de dia
+- ✅ Formato de horas no relatório em `HH:MM`
+
+### Tarefas pendentes de configuração (backlog)
+1. **Relatórios - Campos visíveis (UI)**
+  - Criar interface para selecionar e ordenar colunas com drag-and-drop
+  - Aplicar configuração em tela, PDF e Excel
+
+2. **Relatórios - Ordenação e agrupamento (UI)**
+  - Expor no módulo de Parâmetros os campos `ordenacaoPadrao` e `agruparPor`
+  - Persistir e aplicar automaticamente ao abrir Relatórios
+
+3. **Relatórios - Cores personalizadas (UI)**
+  - Criar controles para `cores.primaria`, `cores.secundaria`, `statusAberto`, `statusFechado`
+  - Aplicar no PDF, cards e tabela
+
+4. **Relatórios - Rodapé e assinatura digital (UI + regra)**
+  - Expor `rodape` em Parâmetros
+  - Expor `assinaturaDigital` e gerar código/hash no PDF quando ativo
+
+5. **Dashboard - Configuração da aba**
+  - Expor `periodoPadrao`, `widgetsVisiveis`, `qtdRegistrosRecentes`
+  - Aplicar preferências ao carregar o Dashboard
+
+6. **Controle de Ponto - Configuração da aba**
+  - Expor e aplicar todos os parâmetros de `ponto` na UI
+  - Garantir uso em validações e fluxo de fechamento
+
+7. **Justificativas - Configuração da aba**
+  - Expor parâmetros de aprovação automática, anexos, prazo e níveis
+  - Aplicar regras no fluxo de solicitação/aprovação
+
+8. **Validações de negócio - aplicação prática**
+  - Enforçar intervalo mínimo entre plantões
+  - Enforçar/alertar carga horária semanal máxima
+  - Aplicar regra de hora extra com percentuais
+
+9. **Preview em tempo real do relatório (miniatura)**
+  - Implementar preview lado a lado na tela de Parâmetros
+  - Debounce de atualização para evitar travamentos
+
+10. **Refino de persistência para logo**
+  - Opcional: mover logo para armazenamento externo (R2/Turso BLOB) para reduzir payload JSON
+  - Manter fallback em base64 para compatibilidade
+
+### Ordem sugerida de execução
+1. Relatórios (campos/ordenação/cores/rodapé)
+2. Dashboard
+3. Controle de Ponto
+4. Justificativas
+5. Validações de negócio
+6. Preview em tempo real
+
+---
+
 **Documento gerado em**: 06/03/2026  
 **Versão**: 1.0  
 **Autor**: Análise automatizada do sistema iDev
