@@ -434,9 +434,9 @@ export const Parametros: React.FC = () => {
                     <div>
                       <h5 className="font-medium text-blue-900 mb-2">Preview de Nomenclatura</h5>
                       <div className="space-y-1 text-sm text-blue-800">
-                        <p>• <strong>Segunda-feira:</strong> {parametros.nomenclatura.turnoMatutino}</p>
-                        <p>• <strong>Sábado:</strong> {parametros.nomenclatura.turnoMatutino}{parametros.calendario.considerarFinaisDeSemana ? ` ${parametros.nomenclatura.sufixoFDS}` : ''}</p>
-                        <p>• <strong>Feriado (Natal):</strong> {parametros.nomenclatura.turnoNoturno}{parametros.calendario.considerarFeriados ? ` ${parametros.nomenclatura.sufixoFeriado}` : ''}</p>
+                        <p>• <strong>Segunda-feira:</strong> M (turno definido em Turnos Padrões)</p>
+                        <p>• <strong>Sábado:</strong> M{parametros.calendario.considerarFinaisDeSemana ? ` ${parametros.nomenclatura.sufixoFDS}` : ''}</p>
+                        <p>• <strong>Feriado (Natal):</strong> N{parametros.calendario.considerarFeriados ? ` ${parametros.nomenclatura.sufixoFeriado}` : ''}</p>
                       </div>
                     </div>
                   </div>
@@ -449,50 +449,7 @@ export const Parametros: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Personalizar Nomenclatura</h3>
-                  <p className="text-gray-600 mb-6">Define como turnos, cooperados e outros termos aparecem no sistema</p>
-
-                  {/* Turnos */}
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div>
-                      <label className="block font-medium text-gray-800 mb-2">Turno Matutino</label>
-                      <input
-                        type="text"
-                        value={parametros.nomenclatura.turnoMatutino}
-                        onChange={(e) => setParametros({
-                          ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, turnoMatutino: e.target.value }
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: MT, Manhã, Diurno"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium text-gray-800 mb-2">Turno Vespertino</label>
-                      <input
-                        type="text"
-                        value={parametros.nomenclatura.turnoVespertino}
-                        onChange={(e) => setParametros({
-                          ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, turnoVespertino: e.target.value }
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: T, Tarde, Vespertino"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium text-gray-800 mb-2">Turno Noturno</label>
-                      <input
-                        type="text"
-                        value={parametros.nomenclatura.turnoNoturno}
-                        onChange={(e) => setParametros({
-                          ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, turnoNoturno: e.target.value }
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: N, Noite, Noturno"
-                      />
-                    </div>
-                  </div>
+                  <p className="text-gray-600 mb-6">Define como sufixos, cooperados e outros termos aparecem no sistema</p>
 
                   {/* Sufixos */}
                   <div className="grid grid-cols-2 gap-4 mb-6">

@@ -89,9 +89,6 @@ export const PARAMETROS_PADRAO: ParametrosSistema = {
   },
 
   nomenclatura: {
-    turnoMatutino: 'MT',
-    turnoVespertino: 'T',
-    turnoNoturno: 'N',
     sufixoFDS: 'FDS',
     sufixoFeriado: 'F',
     termoCooperado: 'Cooperado',

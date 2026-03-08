@@ -273,9 +273,6 @@ export interface ParametrosSistema {
 
   // 5. Nomenclatura
   nomenclatura: {
-    turnoMatutino: string;
-    turnoVespertino: string;
-    turnoNoturno: string;
     sufixoFDS: string;
     sufixoFeriado: string;
     termoCooperado: string;
