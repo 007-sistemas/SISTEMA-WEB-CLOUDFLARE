@@ -142,6 +142,80 @@ export const PARAMETROS_PADRAO: ParametrosSistema = {
   updatedBy: undefined
 };
 
+const normalizarParametros = (raw: Partial<ParametrosSistema> | null | undefined): ParametrosSistema => {
+  if (!raw || typeof raw !== 'object') {
+    return { ...PARAMETROS_PADRAO };
+  }
+
+  return {
+    ...PARAMETROS_PADRAO,
+    ...raw,
+    empresa: {
+      ...PARAMETROS_PADRAO.empresa,
+      ...(raw.empresa || {})
+    },
+    calendario: {
+      ...PARAMETROS_PADRAO.calendario,
+      ...(raw.calendario || {}),
+      listaFeriados: raw.calendario?.listaFeriados || PARAMETROS_PADRAO.calendario.listaFeriados
+    },
+    relatorios: {
+      ...PARAMETROS_PADRAO.relatorios,
+      ...(raw.relatorios || {}),
+      totalizadores: {
+        ...PARAMETROS_PADRAO.relatorios.totalizadores,
+        ...(raw.relatorios?.totalizadores || {})
+      },
+      cores: {
+        ...PARAMETROS_PADRAO.relatorios.cores,
+        ...(raw.relatorios?.cores || {})
+      }
+    },
+    ponto: {
+      ...PARAMETROS_PADRAO.ponto,
+      ...(raw.ponto || {})
+    },
+    justificativas: {
+      ...PARAMETROS_PADRAO.justificativas,
+      ...(raw.justificativas || {}),
+      aprovarAutomaticamente: {
+        ...PARAMETROS_PADRAO.justificativas.aprovarAutomaticamente,
+        ...(raw.justificativas?.aprovarAutomaticamente || {})
+      },
+      exigirAnexos: {
+        ...PARAMETROS_PADRAO.justificativas.exigirAnexos,
+        ...(raw.justificativas?.exigirAnexos || {})
+      }
+    },
+    nomenclatura: {
+      ...PARAMETROS_PADRAO.nomenclatura,
+      ...(raw.nomenclatura || {})
+    },
+    dashboard: {
+      ...PARAMETROS_PADRAO.dashboard,
+      ...(raw.dashboard || {})
+    },
+    categorias: {
+      ...PARAMETROS_PADRAO.categorias,
+      ...(raw.categorias || {}),
+      exigirRegistroProfissional: {
+        ...PARAMETROS_PADRAO.categorias.exigirRegistroProfissional,
+        ...(raw.categorias?.exigirRegistroProfissional || {})
+      }
+    },
+    validacoes: {
+      ...PARAMETROS_PADRAO.validacoes,
+      ...(raw.validacoes || {}),
+      percentualHoraExtra: {
+        ...PARAMETROS_PADRAO.validacoes.percentualHoraExtra,
+        ...(raw.validacoes?.percentualHoraExtra || {})
+      }
+    },
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+    updatedBy: raw.updatedBy
+  };
+};
+
 /**
  * Obter parâmetros do localStorage (com fallback para padrão)
  */
@@ -150,13 +224,12 @@ export const getParametros = (): ParametrosSistema => {
     const stored = localStorage.getItem(PARAMETROS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Merge com padrão para garantir que novos campos existam
-      return { ...PARAMETROS_PADRAO, ...parsed };
+      return normalizarParametros(parsed);
     }
   } catch (error) {
     console.warn('[parametros] Erro ao carregar do localStorage:', error);
   }
-  return PARAMETROS_PADRAO;
+  return normalizarParametros(PARAMETROS_PADRAO);
 };
 
 /**
@@ -165,7 +238,7 @@ export const getParametros = (): ParametrosSistema => {
 export const saveParametros = (parametros: ParametrosSistema): void => {
   try {
     const updated = {
-      ...parametros,
+      ...normalizarParametros(parametros),
       updatedAt: new Date().toISOString()
     };
     localStorage.setItem(PARAMETROS_KEY, JSON.stringify(updated));
@@ -202,10 +275,12 @@ export const loadParametrosFromRemote = async (): Promise<ParametrosSistema> => 
       return local;
     }
 
+    const normalizado = normalizarParametros(remote);
+
     // Salvar no localStorage como cache
-    saveParametros(remote);
+    saveParametros(normalizado);
     console.log('[parametros] ✅ Carregado do backend');
-    return remote;
+    return normalizado;
   } catch (error) {
     console.warn('[parametros] ⚠️ Erro ao carregar do backend, usando localStorage:', error);
     return getParametros();
