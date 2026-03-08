@@ -326,48 +326,75 @@ export const Relatorios: React.FC = () => {
 
       const status = isFechado(entrada, saida) ? 'Fechado' : 'Em Aberto';
 
-      // Determinar turno baseado no horário de entrada com tolerâncias
-      const determinarTurno = (horaEntrada: string): string => {
+      // Determinar turno baseado no horário de entrada E saída com tolerâncias
+      const determinarTurno = (horaEntrada: string, horaSaida: string): string => {
         if (!turnosPadroes || turnosPadroes.length === 0) return '--';
+        
+        // Se não há saída registrada, não podemos determinar o turno completo
+        if (horaSaida === '--' || horaSaida === '--:--') return '--';
         
         const [hE, mE] = horaEntrada.split(':').map(Number);
         const entradaMinutos = hE * 60 + mE;
         
-        // Encontrar o turno que contém este horário (considerando tolerâncias)
-        let turnoEncontrado = turnosPadroes.find(t => {
+        const [hS, mS] = horaSaida.split(':').map(Number);
+        const saidaMinutos = hS * 60 + mS;
+        
+        // Função auxiliar para verificar se um horário está dentro de um range (considerando meia-noite)
+        const estaNoRange = (minutos: number, inicioEfetivo: number, fimEfetivo: number, ehNoturno: boolean): boolean => {
+          if (ehNoturno) {
+            // Turno noturno: válido se >= inicio OU <= fim (atravessa meia-noite)
+            return minutos >= inicioEfetivo || minutos <= fimEfetivo;
+          } else {
+            // Turno normal: válido se >= inicio E <= fim
+            return minutos >= inicioEfetivo && minutos <= fimEfetivo;
+          }
+        };
+        
+        // Encontrar todos os turnos que contêm este plantão (entrada E saída)
+        const turnosValidos = turnosPadroes.filter(t => {
           const [hI, mI] = t.horarioInicio.split(':').map(Number);
           const [hF, mF] = t.horarioFim.split(':').map(Number);
+          
+          const inicioBase = hI * 60 + mI;
+          const fimBase = hF * 60 + mF;
+          const ehNoturno = fimBase < inicioBase; // Atravessa meia-noite
           
           // Aplicar tolerâncias
           const toleranciaAntes = t.toleranciaAntes || 0;
           const toleranciaDepois = t.toleranciaDepois || 0;
           
-          // Calcular intervalo efetivo com tolerâncias
-          let inicioEfetivo = (hI * 60 + mI) - toleranciaAntes;
-          let fimEfetivo = (hF * 60 + mF) + toleranciaDepois;
+          const inicioEfetivo = inicioBase - toleranciaAntes;
+          const fimEfetivo = fimBase + toleranciaDepois;
           
-          // Se fim < inicio (turno noturno que atravessa meia-noite)
-          if (hF * 60 + mF < hI * 60 + mI) {
-            // Turno noturno: ex: 19:00 (1140 min) até 07:00 (420 min)
-            // Com tolerância: 18:00 (1080) até 08:00 (480)
-            // Entrada é válida se >= inicioEfetivo OU <= fimEfetivo
-            if (entradaMinutos >= inicioEfetivo || entradaMinutos <= fimEfetivo) {
-              return true;
-            }
-          } else {
-            // Turno normal: entrada deve estar entre inicioEfetivo e fimEfetivo
-            if (entradaMinutos >= inicioEfetivo && entradaMinutos <= fimEfetivo) {
-              return true;
-            }
-          }
+          // Verificar se AMBAS entrada e saída estão dentro do turno
+          const entradaDentro = estaNoRange(entradaMinutos, inicioEfetivo, fimEfetivo, ehNoturno);
+          const saidaDentro = estaNoRange(saidaMinutos, inicioEfetivo, fimEfetivo, ehNoturno);
           
-          return false;
+          return entradaDentro && saidaDentro;
         });
         
-        return turnoEncontrado?.nome || '--';
+        if (turnosValidos.length === 0) return '--';
+        
+        // Se há múltiplos turnos válidos, escolher o mais específico (menor duração)
+        if (turnosValidos.length > 1) {
+          turnosValidos.sort((a, b) => {
+            const [hIa, mIa] = a.horarioInicio.split(':').map(Number);
+            const [hFa, mFa] = a.horarioFim.split(':').map(Number);
+            const duracaoA = (hFa * 60 + mFa) - (hIa * 60 + mIa);
+            
+            const [hIb, mIb] = b.horarioInicio.split(':').map(Number);
+            const [hFb, mFb] = b.horarioFim.split(':').map(Number);
+            const duracaoB = (hFb * 60 + mFb) - (hIb * 60 + mIb);
+            
+            // Ordenar por menor duração (mais específico primeiro)
+            return Math.abs(duracaoA) - Math.abs(duracaoB);
+          });
+        }
+        
+        return turnosValidos[0].nome;
       };
 
-      const turno = determinarTurno(entradaHora);
+      const turno = determinarTurno(entradaHora, saidaHora);
 
       rows.push({
         cooperadoNome: cooperado.nome,
