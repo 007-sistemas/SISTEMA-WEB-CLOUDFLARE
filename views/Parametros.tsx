@@ -282,40 +282,6 @@ export const Parametros: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Configurações de Calendário</h3>
-                  
-                  {/* Considerar Finais de Semana */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4">
-                    <div>
-                      <label className="font-medium text-gray-800">Considerar Finais de Semana</label>
-                      <p className="text-sm text-gray-600">Adiciona sufixo "{parametros.nomenclatura.sufixoFDS}" aos turnos em sábados e domingos</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={parametros.calendario.considerarFinaisDeSemana}
-                      onChange={(e) => setParametros({
-                        ...parametros,
-                        calendario: { ...parametros.calendario, considerarFinaisDeSemana: e.target.checked }
-                      })}
-                      className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
-
-                  {/* Considerar Feriados */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4">
-                    <div>
-                      <label className="font-medium text-gray-800">Considerar Feriados</label>
-                      <p className="text-sm text-gray-600">Adiciona sufixo "{parametros.nomenclatura.sufixoFeriado}" aos turnos em feriados</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={parametros.calendario.considerarFeriados}
-                      onChange={(e) => setParametros({
-                        ...parametros,
-                        calendario: { ...parametros.calendario, considerarFeriados: e.target.checked }
-                      })}
-                      className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                    />
-                  </div>
 
                   {/* Formatos */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
@@ -449,37 +415,7 @@ export const Parametros: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Personalizar Nomenclatura</h3>
-                  <p className="text-gray-600 mb-6">Define como sufixos, cooperados e outros termos aparecem no sistema</p>
-
-                  {/* Sufixos */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                      <label className="block font-medium text-gray-800 mb-2">Sufixo de Final de Semana</label>
-                      <input
-                        type="text"
-                        value={parametros.nomenclatura.sufixoFDS}
-                        onChange={(e) => setParametros({
-                          ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, sufixoFDS: e.target.value }
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: FDS, FS, WEEKEND"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-medium text-gray-800 mb-2">Sufixo de Feriado</label>
-                      <input
-                        type="text"
-                        value={parametros.nomenclatura.sufixoFeriado}
-                        onChange={(e) => setParametros({
-                          ...parametros,
-                          nomenclatura: { ...parametros.nomenclatura, sufixoFeriado: e.target.value }
-                        })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: F, FER, FERIADO"
-                      />
-                    </div>
-                  </div>
+                  <p className="text-gray-600 mb-6">Define como cooperados e outros termos aparecem no sistema</p>
 
                   {/* Termos Gerais */}
                   <div className="grid grid-cols-2 gap-4">
@@ -602,8 +538,89 @@ export const Parametros: React.FC = () => {
                     )}
                   </div>
 
+                  {/* Sufixos de Turnos */}
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <h4 className="text-lg font-bold text-gray-800 mb-6">Sufixos de Turnos</h4>
+                    <p className="text-gray-600 mb-6">Configure sufixos a adicionar aos nomes dos turnos em finais de semana e feriados</p>
+
+                    {/* Checkboxes */}
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <label className="font-medium text-gray-800">Considerar Finais de Semana</label>
+                          <p className="text-sm text-gray-600">Ativa sufixo em sábados e domingos</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={parametros.calendario.considerarFinaisDeSemana}
+                          onChange={(e) => setParametros({
+                            ...parametros,
+                            calendario: { ...parametros.calendario, considerarFinaisDeSemana: e.target.checked }
+                          })}
+                          className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <label className="font-medium text-gray-800">Considerar Feriados</label>
+                          <p className="text-sm text-gray-600">Ativa sufixo em feriados cadastrados</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={parametros.calendario.considerarFeriados}
+                          onChange={(e) => setParametros({
+                            ...parametros,
+                            calendario: { ...parametros.calendario, considerarFeriados: e.target.checked }
+                          })}
+                          className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Inputs de Sufixos */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <label className="block font-medium text-gray-800 mb-2">Sufixo de Final de Semana</label>
+                        <input
+                          type="text"
+                          value={parametros.nomenclatura.sufixoFDS}
+                          onChange={(e) => setParametros({
+                            ...parametros,
+                            nomenclatura: { ...parametros.nomenclatura, sufixoFDS: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="Ex: FDS, FS, WEEKEND"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium text-gray-800 mb-2">Sufixo de Feriado</label>
+                        <input
+                          type="text"
+                          value={parametros.nomenclatura.sufixoFeriado}
+                          onChange={(e) => setParametros({
+                            ...parametros,
+                            nomenclatura: { ...parametros.nomenclatura, sufixoFeriado: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="Ex: F, FER, FERIADO"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm font-medium text-blue-900 mb-2">Preview:</p>
+                      <div className="flex gap-4 text-sm text-blue-800">
+                        <span>M</span>
+                        {parametros.calendario.considerarFinaisDeSemana && <span>M{parametros.nomenclatura.sufixoFDS}</span>}
+                        {parametros.calendario.considerarFeriados && <span>N{parametros.nomenclatura.sufixoFeriado}</span>}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Tabela */}
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="border border-gray-200 rounded-lg overflow-hidden mt-8">
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-primary-700 text-white">
