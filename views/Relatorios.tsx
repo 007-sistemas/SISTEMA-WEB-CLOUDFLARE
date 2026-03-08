@@ -339,6 +339,9 @@ export const Relatorios: React.FC = () => {
         const [hS, mS] = horaSaida.split(':').map(Number);
         const saidaMinutos = hS * 60 + mS;
         
+        // Detectar se o plantão atravessa meia-noite
+        const plantaoAtravessaMeiaNoite = saidaMinutos < entradaMinutos;
+        
         // Função auxiliar para verificar se um horário está dentro de um range (considerando meia-noite)
         const estaNoRange = (minutos: number, inicioEfetivo: number, fimEfetivo: number, ehNoturno: boolean): boolean => {
           if (ehNoturno) {
@@ -357,7 +360,17 @@ export const Relatorios: React.FC = () => {
           
           const inicioBase = hI * 60 + mI;
           const fimBase = hF * 60 + mF;
-          const ehNoturno = fimBase < inicioBase; // Atravessa meia-noite
+          const ehTurnoNoturno = fimBase < inicioBase; // Turno atravessa meia-noite
+          
+          // Se o plantão atravessa meia-noite mas o turno não é noturno, não se encaixa
+          if (plantaoAtravessaMeiaNoite && !ehTurnoNoturno) {
+            return false;
+          }
+          
+          // Se o plantão NÃO atravessa meia-noite mas o turno é noturno, não se encaixa
+          if (!plantaoAtravessaMeiaNoite && ehTurnoNoturno) {
+            return false;
+          }
           
           // Aplicar tolerâncias
           const toleranciaAntes = t.toleranciaAntes || 0;
@@ -367,8 +380,8 @@ export const Relatorios: React.FC = () => {
           const fimEfetivo = fimBase + toleranciaDepois;
           
           // Verificar se AMBAS entrada e saída estão dentro do turno
-          const entradaDentro = estaNoRange(entradaMinutos, inicioEfetivo, fimEfetivo, ehNoturno);
-          const saidaDentro = estaNoRange(saidaMinutos, inicioEfetivo, fimEfetivo, ehNoturno);
+          const entradaDentro = estaNoRange(entradaMinutos, inicioEfetivo, fimEfetivo, ehTurnoNoturno);
+          const saidaDentro = estaNoRange(saidaMinutos, inicioEfetivo, fimEfetivo, ehTurnoNoturno);
           
           return entradaDentro && saidaDentro;
         });
@@ -380,14 +393,16 @@ export const Relatorios: React.FC = () => {
           turnosValidos.sort((a, b) => {
             const [hIa, mIa] = a.horarioInicio.split(':').map(Number);
             const [hFa, mFa] = a.horarioFim.split(':').map(Number);
-            const duracaoA = (hFa * 60 + mFa) - (hIa * 60 + mIa);
+            let duracaoA = (hFa * 60 + mFa) - (hIa * 60 + mIa);
+            if (duracaoA < 0) duracaoA += 1440; // Ajustar turnos noturnos (adiciona 24h)
             
             const [hIb, mIb] = b.horarioInicio.split(':').map(Number);
             const [hFb, mFb] = b.horarioFim.split(':').map(Number);
-            const duracaoB = (hFb * 60 + mFb) - (hIb * 60 + mIb);
+            let duracaoB = (hFb * 60 + mFb) - (hIb * 60 + mIb);
+            if (duracaoB < 0) duracaoB += 1440; // Ajustar turnos noturnos (adiciona 24h)
             
             // Ordenar por menor duração (mais específico primeiro)
-            return Math.abs(duracaoA) - Math.abs(duracaoB);
+            return duracaoA - duracaoB;
           });
         }
         
